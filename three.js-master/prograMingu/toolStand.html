@@ -4,16 +4,17 @@
 
 <head>
     <title>Tool Stand Generator</title>
-    <script type="text/javascript" src="../libs/three.js"></script>
+    <meta http-equiv="content-type" charset="utf-8">
+    <script type="text/javascript" src="../three.js/libs/three.js"></script>
 
-    <script type="text/javascript" src="../libs/stats.js"></script>
-    <script type="text/javascript" src="../libs/dat.gui.js"></script>
-    <script type="text/javascript" src="../libs/spin.js"></script>
-    <script type="text/javascript" src="../libs/ThreeBSP.js"></script>
-    <script type="text/javascript" script src="../libs/controls/OrbitControls.js"></script>
-    <script type="text/javascript" src="../libs/exporters/STLExporter.js"></script>
+    <script type="text/javascript" src="../three.js/libs/stats.js"></script>
+    <script type="text/javascript" src="../three.js/libs/dat.gui.js"></script>
+    <script type="text/javascript" src="../three.js/libs/spin.js"></script>
+    <script type="text/javascript" src="../three.js/libs/ThreeBSP.js"></script>
+    <script type="text/javascript" script src="../three.js/libs/controls/OrbitControls.js"></script>
+    <script type="text/javascript" src="../three.js/libs/exporters/STLExporter.js"></script>
 
-    <script type="text/javascript" src="../libs/WebGL.js"></script>
+    <script type="text/javascript" src="../three.js/libs/WebGL.js"></script>
 
     <style>
         body {
@@ -40,12 +41,13 @@
 <body>
 
   <div id="info">
-    <a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> Tool Stand Generator<br/><br/>
-
+    <!--<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a>-->
+    Tool Stand Generator Ver.1.0<br/><br/>
+    ①[cylinder1]～[rectangle3]を操作してカスタマイズする</br>②[showResult]をクリックする</br>③下のボタンを押す</br>
     <button onclick="exportASCII()">Download STL File</button>
-    <button onclick="redrawResult()">redraw result</button>
+    <!--
     <button onclick="exportBinary()">export Binary</button>
-
+    -->
   </div>
 
   <div id="Stats-output">
@@ -609,7 +611,6 @@
                     result.geometry.computeFaceNormals();
                     result.geometry.computeVertexNormals();
                     scene.add(result);
-
                 }
 
                 hideSpinner(spinner);
@@ -716,11 +717,10 @@
     //stlダウンロードBinary
     function exportBinary() {
 
-      var result1 = exporter.parse( result, { binary: true } );
+      var result1 = exporter.parse( mesh, { binary: true } );
       saveArrayBuffer( result1, 'toolstand.stl' );
 
     }
-
     var link = document.createElement( 'a' );
     link.style.display = 'none';
     document.body.appendChild( link );
