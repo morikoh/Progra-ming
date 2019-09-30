@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Example 06.08 - Binary operations</title>
+    <script type="text/javascript" src="../libs/three.js"></script>
+
+    <script type="text/javascript" src="../libs/stats.js"></script>
+    <script type="text/javascript" src="../libs/dat.gui.js"></script>
+    <script type="text/javascript" src="../libs/spin.js"></script>
+    <script type="text/javascript" src="../libs/ThreeBSP.js"></script>
+    <script type="text/javascript" script src="../libs/controls/OrbitControls.js"></script>
+    <script type="text/javascript" src="../libs/exporters/STLExporter.js"></script>
+
+    <script type="text/javascript" src="../libs/WebGL.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+        #info {
+          color: #fff;
+          position: absolute;
+          top: 10px;
+          width: 100%;
+          text-align: center;
+          display:block;
+        }
+        #info a {
+          color: #046;
+          font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+  <div id="info">
+    <a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> Shaft Generator<br/><br/>
+    <button onclick="exportASCII()">export ASCII</button> <button onclick="exportBinary()">export binary</button>
+  </div>
+
+<div id="Stats-output">
+</div>
+<!-- Div which will hold the Output -->
+<div id="WebGL-output">
+</div>
+
+
+<!-- Javascript code that runs our Three.js examples -->
+<script type="text/javascript">
+
+var result;
+
+//stlexporter
+var exporter = new THREE.STLExporter();
+
+    // once everything is loaded, we run our Three.js stuff.
+    function init() {
+
+        var stats = initStats();
+
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        var scene = new THREE.Scene();
+
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        var controls = new THREE.OrbitControls(camera);
+
+        // create the ground plane
+        var planeGeometry = new THREE.PlaneGeometry(1000, 1000);
+        var planeMaterial = new THREE.MeshBasicMaterial({color: 0x778899});
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+        // rotate and position the plane
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.x = 0;
+        plane.position.y = -0.1;
+        plane.position.z = 0;
+
+        // add the plane to the scene
+        //scene.add(plane);
+
+
+        //GridHelper(大きさ, １マスの大きさ)
+        var grid = new THREE.GridHelper(1000, 10);
+
+        //grid色設定
+        grid.material.color = new THREE.Color( 0xb0c4de);
+
+        // rotate and position the grid
+        grid.position.x = 0;
+        grid.position.y = 0;
+        grid.position.z = 0;
+
+        //シーンオブジェクトに追加
+        scene.add(grid);
+
+
+
+
+        // create a render and set the size
+        var webGLRenderer = new THREE.WebGLRenderer();
+        webGLRenderer.setClearColor(new THREE.Color(0x999999));
+        webGLRenderer.setSize(window.innerWidth, window.innerHeight);
+        webGLRenderer.shadowMap.enabled = true;
+
+        var shape = createMesh(new THREE.ShapeGeometry(drawShape()));
+        shape.position.x = -2;
+
+        var shaft = createMesh(new THREE.BoxGeometry(7.8, 7.88, 30));
+        shaft.position.set(0, 0, 0);
+
+        //var result;
+
+
+        // add the sphere to the scene
+        scene.add(shape);
+        scene.add(shaft);
+
+        // position and point the camera to the center of the scene
+        camera.position.x = 0;
+        camera.position.y = 100;
+        camera.position.z = 100;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+
+        // add the output of the renderer to the html element
+        document.getElementById("WebGL-output").appendChild(webGLRenderer.domElement);
+
+        // call the render function
+        var step = 0;
+
+
+        // setup the control gui
+        var controls = new function () {
+
+            this.shapePosX = shape.position.x;
+            this.shapePosY = shape.position.y;
+            this.shapePosZ = shape.position.z;
+            this.shapeScale = 1;
+
+            this.shaftPosX = shaft.position.x;
+            this.shaftPosY = shaft.position.y;
+            this.shaftPosZ = shaft.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.actionshaft = "union"; // add, substract, intersect
+            this.actionSphere = "union";
+
+            this.showResult = function () {
+                redrawResult();
+            };
+
+            this.hideWireframes = false;
+            this.rotateResult = false;
+
+            this.amount = 1;
+            this.bevelThickness = 2;
+            this.bevelSize = 0;
+            this.bevelEnabled = true;
+            this.bevelSegments = 3;
+            this.bevelEnabled = true;
+            this.curveSegments = 12;
+            this.steps = 1;
+
+            this.asGeom = function () {
+                // remove the old plane
+                scene.remove(shape);
+                // create a new one
+
+                var options = {
+                    amount: controls.amount,
+                    bevelThickness: controls.bevelThickness,
+                    bevelSize: controls.bevelSize,
+
+                    bevelSegments: controls.bevelSegments,
+                    bevelEnabled: controls.bevelEnabled,
+                    curveSegments: controls.curveSegments,
+                    steps: controls.steps
+                };
+
+                shape = createMesh(new THREE.ExtrudeGeometry(drawShape(), options));
+                // add it to the scene.
+                scene.add(shape);
+
+            };
+
+
+        };
+
+        var gui = new dat.GUI();
+
+        var guishape = gui.addFolder("shape");
+        guishape.add(controls, "shapePosX", -15, 15).onChange(function () {
+            shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
+        });
+        guishape.add(controls, "shapePosY", -15, 15).onChange(function () {
+            shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
+        });
+        guishape.add(controls, "shapePosZ", -15, 15).onChange(function () {
+            shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
+        });
+        guishape.add(controls, "shapeScale", 0, 10).onChange(function (e) {
+            shape.scale.set(e, e, e)
+        });
+
+        var guishaft = gui.addFolder("shaft");
+        guishaft.add(controls, "shaftPosX", -15, 15).onChange(function () {
+            shaft.position.set(controls.shaftPosX, controls.shaftPosY, controls.shaftPosZ)
+        });
+        guishaft.add(controls, "shaftPosY", -15, 15).onChange(function () {
+            shaft.position.set(controls.shaftPosX, controls.shaftPosY, controls.shaftPosZ)
+        });
+        guishaft.add(controls, "shaftPosZ", -15, 15).onChange(function () {
+            shaft.position.set(controls.shaftPosX, controls.shaftPosY, controls.shaftPosZ)
+        });
+        guishaft.add(controls, "scaleX", 0, 10).onChange(function (e) {
+            shaft.scale.x = e
+        });
+        guishaft.add(controls, "scaleY", 0, 10).onChange(function (e) {
+            shaft.scale.y = e
+        });
+        guishaft.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+            shaft.scale.z = e
+        });
+        guishaft.add(controls, "actionshaft", ["subtract", "intersect", "union", "none"]);
+
+        gui.add(controls, "showResult");
+        gui.add(controls, "rotateResult");
+        gui.add(controls, "hideWireframes").onChange(function () {
+            if (controls.hideWireframes) {
+                shape.material.visible = false;
+                squareBack.material.visible = false;
+                shaft.material.visible = false;
+            } else {
+                shape.material.visible = true;
+                squareBack.material.visible = true;
+                shaft.material.visible = true;
+            }
+          });
+        //extrude関連gui
+        guishape.add(controls, 'amount', 0, 40).onChange(controls.asGeom);
+            gui.add(controls, 'bevelThickness', 0, 10).onChange(controls.asGeom);
+            //gui.add(controls, 'bevelSize', 0, 10).onChange(controls.asGeom);
+            //gui.add(controls, 'bevelSegments', 0, 30).step(1).onChange(controls.asGeom);
+            //gui.add(controls, 'bevelEnabled').onChange(controls.asGeom);
+            //gui.add(controls, 'curveSegments', 1, 30).step(1).onChange(controls.asGeom);
+        guishape.add(controls, 'steps', 1, 5).step(1).onChange(controls.asGeom);
+
+        controls.asGeom();
+
+
+
+        render();
+
+        var spinner;
+
+        function redrawResult() {
+
+            showSpinner();
+
+            // make the call async to avoid blocking the thread. Need
+            // to set timeout > 1, if not executed immediately.
+            setTimeout(function () {
+                scene.remove(result);
+                var shapeBSP = new ThreeBSP(shape);
+                var shaft2BSP = new ThreeBSP(shaft);
+
+                var resultBSP;
+
+
+
+                // next do the shaft
+                if (!resultBSP) resultBSP = shapeBSP;
+                switch (controls.actionshaft) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(shaft2BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(shaft2BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(shaft2BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+
+                if (controls.actionshaft === "none" && controls.actionshape === "none") {
+                    // do nothing
+                } else {
+                    result = resultBSP.toMesh();
+                    result.geometry.computeFaceNormals();
+                    result.geometry.computeVertexNormals();
+                    scene.add(result);
+                }
+
+                hideSpinner(spinner);
+            }, 200);
+        }
+
+        function createMesh(geom) {
+
+            // assign two materials
+            var meshMaterial = new THREE.MeshNormalMaterial();
+            meshMaterial.side = THREE.DoubleSide;
+            var wireFrameMat = new THREE.MeshBasicMaterial({opacity: 0.5, wireframeLinewidth: 0.5});
+            wireFrameMat.wireframe = true;
+
+            // create a multimaterial
+            var mesh = new THREE.Mesh(geom, wireFrameMat);
+
+            return mesh;
+        }
+
+
+        function showSpinner() {
+
+            var opts = {
+                lines: 13, // The number of lines to draw
+                length: 20, // The length of each line
+                width: 10, // The line thickness
+                radius: 30, // The radius of the inner circle
+                corners: 1, // Corner roundness (0..1)
+                rotate: 0, // The rotation offset
+                direction: 1, // 1: clockwise, -1: counterclockwise
+                color: '#000', // #rgb or #rrggbb or array of colors
+                speed: 1, // Rounds per second
+                trail: 60, // Afterglow percentage
+                shadow: false, // Whether to render a shadow
+                hwaccel: false, // Whether to use hardware acceleration
+                className: 'spinner', // The CSS class to assign to the spinner
+                zIndex: 2e9, // The z-index (defaults to 2000000000)
+                top: '50%', // Top position relative to parent in px
+                left: '50%' // Left position relative to parent in px
+            };
+            var target = document.getElementById('WebGL-output');
+            spinner = new Spinner(opts).spin(target);
+            return spinner;
+        }
+
+        function hideSpinner(spinner) {
+            spinner.stop();
+        }
+
+        function render() {
+            stats.update();
+
+
+//            sphere.rotation.y=step+=0.01;
+
+//            if (typeof  ThreeBSP!='undefined') {console.log(ThreeBSP)};
+//            console.log(ThreeBSP);
+
+            if (controls.rotateResult && result) {
+                result.rotation.y += 0.04;
+                //      result.rotation.x+=0.04;
+                result.rotation.z -= 0.005;
+            }
+
+            // render using requestAnimationFrame
+            requestAnimationFrame(render);
+            webGLRenderer.render(scene, camera);
+        }
+
+        function initStats() {
+
+            var stats = new Stats();
+            stats.setMode(0); // 0: fps, 1: ms
+
+            // Align top-left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+
+            document.getElementById("Stats-output").appendChild(stats.domElement);
+
+            return stats;
+        }
+
+    };
+
+    function drawShape() {
+
+        // create a basic shape
+        var shape = new THREE.Shape();
+
+        shape.absarc(0,0,11,11,0, Math.PI * 2,true);
+        /*
+        // startpoint
+        shape.moveTo(0, 0);
+
+        // straight line upwards
+        shape.lineTo(0, 40);
+
+        // straight line upwards
+        shape.lineTo(30, 40);
+
+        shape.lineTo(30, 40);
+
+        shape.lineTo(80, 30);
+
+        shape.lineTo(80, 0);
+
+        shape.lineTo(0, 0);
+
+        var squareBack = new THREE.Path();
+        //squareBack.absellipse(23, 24, 2, 3, 0, Math.PI * 2 , true);
+        //squareBack.PlaneGeometry(23, 24, 10, 10);
+
+        squareBack.moveTo(10,20);
+        squareBack.lineTo(10,30);
+        squareBack.lineTo(20,30);
+        squareBack.lineTo(20,20);
+        squareBack.lineTo(10,20);
+        shape.holes.push(squareBack);
+*/
+        // return the shape
+        return shape;
+    }
+
+    function createMesh(geom) {
+
+        geom.applyMatrix(new THREE.Matrix4().makeTranslation(-20, 0, 0));
+
+        // assign two materials
+        var meshMaterial = new THREE.MeshNormalMaterial({
+            transparent: true,
+            opacity: 0.7
+        });
+
+        //  meshMaterial.side = THREE.DoubleSide;
+        var wireFrameMat = new THREE.MeshBasicMaterial();
+        wireFrameMat.wireframe = true;
+
+        // create a multimaterial
+        var mesh = THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial]);
+
+        return mesh;
+    }
+
+    function createLine(shape, spaced) {
+        if (!spaced) {
+            var mesh = new THREE.Line(shape.createPointsGeometry(), new THREE.LineBasicMaterial({
+                color: 0xff3333,
+                linewidth: 2
+            }));
+            return mesh;
+        } else {
+            var mesh = new THREE.Line(shape.createSpacedPointsGeometry(20), new THREE.LineBasicMaterial({
+                color: 0xff3333,
+                linewidth: 2
+            }));
+            return mesh;
+        }
+
+    }
+
+    window.onload = init();
+
+    //stlダウンロードASCII
+    function exportASCII() {
+
+      var result1 = exporter.parse( result );
+      saveString( result1, 'shaft.stl' );
+
+    }
+    //stlダウンロードBinary
+    function exportBinary() {
+
+      var result1 = exporter.parse( mesh, { binary: true } );
+      saveArrayBuffer( result1, 'shaft.stl' );
+
+    }
+    var link = document.createElement( 'a' );
+    link.style.display = 'none';
+    document.body.appendChild( link );
+
+    function save( blob, filename ) {
+
+      link.href = URL.createObjectURL( blob );
+      link.download = filename;
+      link.click();
+
+    }
+
+    function saveString( text, filename ) {
+
+      save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+    }
+
+    function saveArrayBuffer( buffer, filename ) {
+
+      save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+    }
+
+
+</script>
+</body>
+</html>

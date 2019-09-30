@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Example 06.08 - Binary operations</title>
+    <script type="text/javascript" src="../libs/three.js"></script>
+
+    <script type="text/javascript" src="../libs/stats.js"></script>
+    <script type="text/javascript" src="../libs/dat.gui.js"></script>
+    <script type="text/javascript" src="../libs/spin.js"></script>
+    <script type="text/javascript" src="../libs/ThreeBSP.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<div id="Stats-output">
+</div>
+<!-- Div which will hold the Output -->
+<div id="WebGL-output">
+</div>
+
+
+<!-- Javascript code that runs our Three.js examples -->
+<script type="text/javascript">
+
+    // once everything is loaded, we run our Three.js stuff.
+    function init() {
+
+        var stats = initStats();
+
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        var scene = new THREE.Scene();
+
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
+        camera.position.set( 200, 100, 200 );
+
+        // create a render and set the size
+        var webGLRenderer = new THREE.WebGLRenderer();
+        webGLRenderer.setClearColor(new THREE.Color(0x999999));
+        webGLRenderer.setSize(window.innerWidth, window.innerHeight);
+        webGLRenderer.shadowMap.enabled = true;
+
+
+
+        var base = createMesh(new THREE.BoxGeometry( 8, 10, 4.5 ));
+        base.position.x = 0;
+
+
+        var rect1 = createMesh(new THREE.BoxGeometry( 1, 12, 1 ));
+        rect1.position.set(3, 1, 3);
+
+        var rect2 = createMesh(new THREE.BoxGeometry( 1, 12, 1 ));
+        rect1.position.set(3, 1, 0);
+
+
+
+        var cylinder1 = createMesh(new THREE.CylinderGeometry(1, 1, 12));
+        cylinder1.position.set(-3, 1, 0);
+
+
+
+        var result;
+
+
+        // add the sphere to the scene
+        scene.add(base);
+        scene.add(rect1);
+        scene.add(rect2);
+        scene.add(cylinder1);
+
+        // position and point the camera to the center of the scene
+        camera.position.x = 0;
+        camera.position.y = 20;
+        camera.position.z = 20;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+
+        // add the output of the renderer to the html element
+        document.getElementById("WebGL-output").appendChild(webGLRenderer.domElement);
+
+        // call the render function
+        var step = 0;
+
+
+        // setup the control gui
+        var controls = new function () {
+
+            this.basePosX = base.position.x;
+            this.basePosY = base.position.y;
+            this.basePosZ = base.position.z;
+            this.baseScale = 1;
+
+            this.rect1PosX = rect1.position.x;
+            this.rect1PosY = rect1.position.y;
+            this.rect1PosZ = rect1.position.z;
+            this.rect1Scale = 1;
+
+            this.rect2PosX = rect1.position.x;
+            this.rect2PosY = rect1.position.y;
+            this.rect2PosZ = rect1.position.z;
+            this.rect2Scale = 1;
+
+            this.cylinder1PosX = cylinder1.position.x;
+            this.cylinder1PosY = cylinder1.position.y;
+            this.cylinder1PosZ = cylinder1.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.actioncylinder1 = "subtract"; // add, substract, intersect
+            this.actionSphere = "subtract";
+
+            this.showResult = function () {
+                redrawResult();
+            };
+
+            this.hideWireframes = false;
+            this.rotateResult = false;
+
+
+        };
+
+        var gui = new dat.GUI();
+        var guibase = gui.addFolder("base");
+        guibase.add(controls, "basePosX", -15, 15).onChange(function () {
+            base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
+        });
+        guibase.add(controls, "basePosY", -15, 15).onChange(function () {
+            base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
+        });
+        guibase.add(controls, "basePosZ", -15, 15).onChange(function () {
+            base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
+        });
+        guibase.add(controls, "baseScale", 0, 10).onChange(function (e) {
+            base.scale.set(e, e, e)
+        });
+
+        var guirect1 = gui.addFolder("rect1");
+        guirect1.add(controls, "rect1PosX", -15, 15).onChange(function () {
+            rect1.position.set(controls.rect1PosX, controls.rect1PosY, controls.rect1PosZ)
+        });
+        guirect1.add(controls, "rect1PosY", -15, 15).onChange(function () {
+            rect1.position.set(controls.rect1PosX, controls.rect1PosY, controls.rect1PosZ)
+        });
+        guirect1.add(controls, "rect1PosZ", -15, 15).onChange(function () {
+            rect1.position.set(controls.rect1PosX, controls.rect1PosY, controls.rect1PosZ)
+        });
+        guirect1.add(controls, "rect1Scale", 0, 10).onChange(function (e) {
+            rect1.scale.set(e, e, e)
+        });
+        guirect1.add(controls, "actionSphere", ["subtract", "intersect", "union", "none"]);
+
+        var guirect2 = gui.addFolder("rect2");
+        guirect2.add(controls, "rect2PosX", -15, 15).onChange(function () {
+            rect2.position.set(controls.rect1PosX, controls.rect1PosY, controls.rect1PosZ)
+        });
+        guirect2.add(controls, "rect2PosY", -15, 15).onChange(function () {
+            rect2.position.set(controls.rect1PosX, controls.rect1PosY, controls.rect1PosZ)
+        });
+        guirect2.add(controls, "rect2PosZ", -15, 15).onChange(function () {
+            rect2.position.set(controls.rect1PosX, controls.rect1PosY, controls.rect1PosZ)
+        });
+        guirect2.add(controls, "rect2Scale", 0, 10).onChange(function (e) {
+            rect2.scale.set(e, e, e)
+        });
+        guirect2.add(controls, "actionSphere", ["subtract", "intersect", "union", "none"]);
+
+        var guicylinder1 = gui.addFolder("cylinder1");
+        guicylinder1.add(controls, "cylinder1PosX", -15, 15).onChange(function () {
+            cylinder1.position.set(controls.cylinder1PosX, controls.cylinder1PosY, controls.cylinder1PosZ)
+        });
+        guicylinder1.add(controls, "cylinder1PosY", -15, 15).onChange(function () {
+            cylinder1.position.set(controls.cylinder1PosX, controls.cylinder1PosY, controls.cylinder1PosZ)
+        });
+        guicylinder1.add(controls, "cylinder1PosZ", -15, 15).onChange(function () {
+            cylinder1.position.set(controls.cylinder1PosX, controls.cylinder1PosY, controls.cylinder1PosZ)
+        });
+        guicylinder1.add(controls, "scaleX", 0, 10).onChange(function (e) {
+            cylinder1.scale.x = e
+        });
+        guicylinder1.add(controls, "scaleY", 0, 10).onChange(function (e) {
+            cylinder1.scale.y = e
+        });
+        guicylinder1.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+            cylinder1.scale.z = e
+        });
+        guicylinder1.add(controls, "actioncylinder1", ["subtract", "intersect", "union", "none"]);
+
+        gui.add(controls, "showResult");
+        gui.add(controls, "rotateResult");
+        gui.add(controls, "hideWireframes").onChange(function () {
+            if (controls.hideWireframes) {
+                base.material.visible = false;
+                rect1.material.visible = false;
+                rect2.material.visible = false;
+                cylinder1.material.visible = false;
+            } else {
+                base.material.visible = true;
+                rect1.material.visible = true;
+                rect2.material.visible = true;
+                cylinder1.material.visible = true;
+            }
+        });
+
+        render();
+
+        var spinner;
+
+        function redrawResult() {
+
+            showSpinner();
+
+            // make the call async to avoid blocking the thread. Need
+            // to set timeout > 1, if not executed immediately.
+            setTimeout(function () {
+                scene.remove(result);
+                var baseBSP = new ThreeBSP(base);
+                var rect1BSP = new ThreeBSP(rect1);
+                var rect2BSP = new ThreeBSP(rect1);
+                var cylinder12BSP = new ThreeBSP(cylinder1);
+
+                var resultBSP;
+
+
+                // first do the sphere
+                switch (controls.actionSphere) {
+                    case "subtract":
+                        resultBSP = baseBSP.subtract(rect1BSP);
+                        resultBSP = baseBSP.subtract(rect2BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = baseBSP.intersect(rect1BSP);
+                        resultBSP = baseBSP.intersect(rect2BSP);
+                        break;
+                    case "union":
+                        resultBSP = baseBSP.union(rect1BSP);
+                        resultBSP = baseBSP.union(rect2BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+                // next do the cylinder1
+                if (!resultBSP) resultBSP = baseBSP;
+                switch (controls.actioncylinder1) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(cylinder12BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(cylinder12BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(cylinder12BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+
+                if (controls.actioncylinder1 === "none" && controls.actionSphere === "none") {
+                    // do nothing
+                } else {
+                    result = resultBSP.toMesh();
+                    result.geometry.computeFaceNormals();
+                    result.geometry.computeVertexNormals();
+                    scene.add(result);
+                }
+
+                hideSpinner(spinner);
+            }, 200);
+        }
+
+        function createMesh(geom) {
+
+            // assign two materials
+            var meshMaterial = new THREE.MeshNormalMaterial();
+            meshMaterial.side = THREE.DoubleSide;
+            var wireFrameMat = new THREE.MeshBasicMaterial({opacity: 0.5, wireframeLinewidth: 0.5});
+            wireFrameMat.wireframe = true;
+
+            // create a multimaterial
+            var mesh = new THREE.Mesh(geom, wireFrameMat);
+
+            return mesh;
+        }
+
+
+        function showSpinner() {
+
+            var opts = {
+                lines: 13, // The number of lines to draw
+                length: 20, // The length of each line
+                width: 10, // The line thickness
+                radius: 30, // The radius of the inner circle
+                corners: 1, // Corner roundness (0..1)
+                rotate: 0, // The rotation offset
+                direction: 1, // 1: clockwise, -1: counterclockwise
+                color: '#000', // #rgb or #rrggbb or array of colors
+                speed: 1, // Rounds per second
+                trail: 60, // Afterglow percentage
+                shadow: false, // Whether to render a shadow
+                hwaccel: false, // Whether to use hardware acceleration
+                className: 'spinner', // The CSS class to assign to the spinner
+                zIndex: 2e9, // The z-index (defaults to 2000000000)
+                top: '50%', // Top position relative to parent in px
+                left: '50%' // Left position relative to parent in px
+            };
+            var target = document.getElementById('WebGL-output');
+            spinner = new Spinner(opts).spin(target);
+            return spinner;
+        }
+
+        function hideSpinner(spinner) {
+            spinner.stop();
+        }
+
+        function render() {
+            stats.update();
+
+
+//            sphere.rotation.y=step+=0.01;
+
+//            if (typeof  ThreeBSP!='undefined') {console.log(ThreeBSP)};
+//            console.log(ThreeBSP);
+
+            if (controls.rotateResult && result) {
+                result.rotation.y += 0.04;
+                //      result.rotation.x+=0.04;
+                result.rotation.z -= 0.005;
+            }
+
+            // render using requestAnimationFrame
+            requestAnimationFrame(render);
+            webGLRenderer.render(scene, camera);
+        }
+
+        function initStats() {
+
+            var stats = new Stats();
+            stats.setMode(0); // 0: fps, 1: ms
+
+            // Align top-left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+
+            document.getElementById("Stats-output").appendChild(stats.domElement);
+
+            return stats;
+        }
+
+    };
+
+    window.onload = init();
+
+
+</script>
+</body>
+</html>
