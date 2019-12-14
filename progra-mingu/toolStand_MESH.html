@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Tool Stand Generator with MESH</title>
+    <meta http-equiv="content-type" charset="utf-8">
+    <script type="text/javascript" src="../three.js/libs/three.js"></script>
+    <script type="text/javascript" src="../three.js/libs/stats.js"></script>
+    <script type="text/javascript" src="../three.js/libs/dat.gui.js"></script>
+    <script type="text/javascript" src="../three.js/libs/spin.js"></script>
+    <script type="text/javascript" src="../three.js/libs/ThreeBSP.js"></script>
+    <script type="text/javascript" script src="../three.js/libs/controls/OrbitControls.js"></script>
+    <script type="text/javascript" src="../three.js/libs/exporters/STLExporter.js"></script>
+
+    <script type="text/javascript" src="../three.js/libs/WebGL.js"></script>
+
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+            }
+            #info {
+              color: #fff;
+              position: absolute;
+              top: 10px;
+              width: 100%;
+              text-align: center;
+              display:block;
+            }
+            #info a {
+              color: #046;
+              font-weight: bold;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+  <div id="info">
+    <!--<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a>-->
+    Tool Stand Generator with MESH<br/><br/> <!--baseのサイズを変更できるようになった-->
+    ①[base]～[rectangle3]を操作してツールスタンドをカスタマイズする</br>
+    ②[MESH1]～[MESH3]を操作してMESHを取り付けたい場所に重ね合わせる</br>
+    ③[showResult]をクリックする</br>
+    ④下のボタンを押す</br>
+    <button onclick="exportASCII()">Download STL File</button>
+    <!--
+    <button onclick="exportBinary()">export Binary</button>
+    -->
+  </div>
+
+  <div id="Stats-output">
+  </div>
+  <!-- Div which will hold the Output -->
+  <div id="WebGL-output">
+  </div>
+
+<!-- Javascript code that runs our Three.js examples -->
+<script type="text/javascript">
+
+    var result;
+
+    //stlexporter
+    var exporter = new THREE.STLExporter();
+
+    // once everything is loaded, we run our Three.js stuff.
+    function init() {
+
+        var stats = initStats();
+        //レンダラーを作成
+        //var renderer = new THREE.WebGLRenderer();
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        var scene = new THREE.Scene();
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+
+/*
+        scene.background = new THREE.Color( 0xa0a0a0 );
+        scene.fog = new THREE.Fog( 0xa0a0a0, 200, 1000 );
+
+        var hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
+        hemiLight.position.set( 0, 200, 0 );
+        scene.add( hemiLight );
+
+        var directionalLight = new THREE.DirectionalLight( 0xffffff );
+        directionalLight.position.set( 0, 200, 100 );
+        directionalLight.castShadow = true;
+        directionalLight.shadow.camera.top = 180;
+        directionalLight.shadow.camera.bottom = - 100;
+        directionalLight.shadow.camera.left = - 120;
+        directionalLight.shadow.camera.right = 120;
+        scene.add( directionalLight );
+*/
+        // create the ground plane
+        var planeGeometry = new THREE.PlaneGeometry(1000, 1000);
+        var planeMaterial = new THREE.MeshBasicMaterial({color: 0x778899});
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+        // rotate and position the plane
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.x = 0;
+        plane.position.y = -31;
+        plane.position.z = 0;
+
+        // add the plane to the scene
+        scene.add(plane);
+
+        //GridHelper(大きさ, １マスの大きさ)
+        var grid = new THREE.GridHelper(1000, 10);
+
+        //grid色設定
+        grid.material.color = new THREE.Color( 0xb0c4de);
+
+        // rotate and position the grid
+        grid.position.x = 0;
+        grid.position.y = -30;
+        grid.position.z = 0;
+
+        //シーンオブジェクトに追加
+        scene.add(grid);
+
+        // create a render and set the size
+        var webGLRenderer = new THREE.WebGLRenderer();
+        webGLRenderer.setClearColor(new THREE.Color(0x999999));
+        webGLRenderer.setSize(window.innerWidth, window.innerHeight);
+        webGLRenderer.shadowMap.enabled = true;
+
+        // カメラを生成した変数を渡してインスタンスを生成
+        var cameraControl = new THREE.OrbitControls(camera, webGLRenderer.domElement);
+
+        //プログラム上でベースとなる図形
+        var dammyBase = createMesh(new THREE.BoxGeometry(0.1, 0.1, 0.1));
+        dammyBase.position.x = 0;
+
+        //実質的にベースとなる図形
+        var base = createMesh(new THREE.BoxGeometry(60, 60, 40));
+        base.position.x = 0;
+
+        //substractする図形1
+        var cylinder1 = createMesh(new THREE.CylinderGeometry(5, 5, 60));
+        cylinder1.position.set(-20, 10, 10);
+
+        //substractする図形2
+        var cylinder2 = createMesh(new THREE.CylinderGeometry(5, 5, 60));
+        cylinder2.position.set(-0, 10, 10);
+
+        //substractする図形3
+        var cylinder3 = createMesh(new THREE.CylinderGeometry(5, 5, 60));
+        cylinder3.position.set(20, 10, 10);
+
+        //substractする図形4
+        var rectangle1 = createMesh(new THREE.BoxGeometry(10, 60, 10));
+        rectangle1.position.set(-20, 10, -10);
+
+        //substractする図形5
+        var rectangle2 = createMesh(new THREE.BoxGeometry(10, 60, 10));
+        rectangle2.position.set(0, 10, -10);
+
+        //substractする図形6
+        var rectangle3 = createMesh(new THREE.BoxGeometry(10, 60, 10));
+        rectangle3.position.set(20, 10, -10);
+
+        //MESH取り付け用に切り取るためのモデルは実寸より1㎜ずつ大きくしている
+        //MESH1
+        var sonyMesh1 = createMesh(new THREE.BoxGeometry(13, 49, 25));
+        sonyMesh1.position.set(-60, 2, 0);
+
+        //MESH2
+        var sonyMesh2 = createMesh(new THREE.BoxGeometry(25, 49, 13));
+        sonyMesh2.position.set(-90, 2, -25);
+
+        //MESH3
+        var sonyMesh3 = createMesh(new THREE.BoxGeometry(49, 13, 25));
+        sonyMesh3.position.set(80, 30, 0);
+
+        // add the 3D models to the scene
+        scene.add(dammyBase);
+        scene.add(base);
+        scene.add(cylinder1);
+        scene.add(cylinder2);
+        scene.add(cylinder3);
+        scene.add(rectangle1);
+        scene.add(rectangle2);
+        scene.add(rectangle3);
+        scene.add(sonyMesh1);
+        scene.add(sonyMesh2);
+        scene.add(sonyMesh3);
+
+
+        // position and point the camera to the center of the scene
+        camera.position.x = 0;
+        camera.position.y = 150;
+        camera.position.z = 150;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        // add the output of the renderer to the html element
+        document.getElementById("WebGL-output").appendChild(webGLRenderer.domElement);
+
+        // call the render function
+        var step = 0;
+
+
+        // setup the control gui
+        var controls = new function () {
+
+            // this.dammyBasePosX = dammyBase.position.x;
+            // this.dammyBasePosY = dammyBase.position.y;
+            // this.dammyBasePosZ = dammyBase.position.z;
+            // this.scaleX = 1;
+            // this.scaleY = 1;
+            // this.scaleZ = 1;
+
+            this.basePosX = base.position.x;
+            this.basePosY = base.position.y;
+            this.basePosZ = base.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.cylinder1PosX = cylinder1.position.x;
+            this.cylinder1PosY = cylinder1.position.y;
+            this.cylinder1PosZ = cylinder1.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.cylinder2PosX = cylinder2.position.x;
+            this.cylinder2PosY = cylinder2.position.y;
+            this.cylinder2PosZ = cylinder2.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.cylinder3PosX = cylinder3.position.x;
+            this.cylinder3PosY = cylinder3.position.y;
+            this.cylinder3PosZ = cylinder3.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.rectangle1PosX = rectangle1.position.x;
+            this.rectangle1PosY = rectangle1.position.y;
+            this.rectangle1PosZ = rectangle1.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.rectangle2PosX = rectangle2.position.x;
+            this.rectangle2PosY = rectangle2.position.y;
+            this.rectangle2PosZ = rectangle2.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.rectangle3PosX = rectangle3.position.x;
+            this.rectangle3PosY = rectangle3.position.y;
+            this.rectangle3PosZ = rectangle3.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.sonyMesh1PosX = sonyMesh1.position.x;
+            this.sonyMesh1PosY = sonyMesh1.position.y;
+            this.sonyMesh1PosZ = sonyMesh1.position.z;
+
+            this.sonyMesh2PosX = sonyMesh2.position.x;
+            this.sonyMesh2PosY = sonyMesh2.position.y;
+            this.sonyMesh2PosZ = sonyMesh2.position.z;
+
+            this.sonyMesh3PosX = sonyMesh3.position.x;
+            this.sonyMesh3PosY = sonyMesh3.position.y;
+            this.sonyMesh3PosZ = sonyMesh3.position.z;
+
+            this.actionbase = "union";
+            this.actionrectangle1 = "subtract"; // add, substract, intersect
+            this.actionrectangle2 = "subtract"; // add, substract, intersect
+            this.actionrectangle3 = "subtract"; // add, substract, intersect
+            this.actioncylinder1 = "subtract"; // add, substract, intersect
+            this.actioncylinder2 = "subtract"; // add, substract, intersect
+            this.actioncylinder3 = "subtract"; // add, substract, intersect
+            this.actionsonyMesh1 = "subtract"; // add, substract, intersect
+            this.actionsonyMesh2 = "subtract"; // add, substract, intersect
+            this.actionsonyMesh3 = "subtract"; // add, substract, intersect
+
+            this.showResult = function () {
+                redrawResult();
+            };
+
+            this.hideWireframes = false;
+            this.rotateResult = false;
+
+        };
+
+        var gui = new dat.GUI();
+
+        // var guidammyBase = gui.addFolder("dammyBase");
+        // guidammyBase.add(controls, "dammyBasePosX", -15, 15).onChange(function () {
+        //     dammyBase.position.set(controls.dammyBasePosX, controls.dammyBasePosY, controls.dammyBasePosZ)
+        // });
+        // guidammyBase.add(controls, "dammyBasePosY", -15, 15).onChange(function () {
+        //     dammyBase.position.set(controls.dammyBasePosX, controls.dammyBasePosY, controls.dammyBasePosZ)
+        // });
+        // guidammyBase.add(controls, "dammyBasePosZ", -15, 15).onChange(function () {
+        //     dammyBase.position.set(controls.dammyBasePosX, controls.dammyBasePosY, controls.dammyBasePosZ)
+        // });
+        // guidammyBase.add(controls, "scaleX", 0, 10).onChange(function (e) {
+        //     dammyBase.scale.x = e
+        // });
+        // guidammyBase.add(controls, "scaleY", 0, 10).onChange(function (e) {
+        //     dammyBase.scale.y = e
+        // });
+        // guidammyBase.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+        //     dammyBase.scale.z = e
+        // });
+
+
+        var guibase = gui.addFolder("base");
+        // guibase.add(controls, "basePosX", -60, 60).onChange(function () {
+        //     base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
+        // });
+        // guibase.add(controls, "basePosY", -60, 60).onChange(function () {
+        //     base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
+        // });
+        // guibase.add(controls, "basePosZ", -60, 60).onChange(function () {
+        //     base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
+        // });
+        guibase.add(controls, "scaleX", 0, 10).onChange(function (e) {
+            base.scale.x = e
+        });
+        guibase.add(controls, "scaleY", 0, 10).onChange(function (e) {
+            base.scale.y = e
+        });
+        guibase.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+            base.scale.z = e
+        });
+        guibase.add(controls, "actionbase", ["subtract", "intersect", "union", "none"]);
+
+        var guicylinder1 = gui.addFolder("cylinder1");
+        guicylinder1.add(controls, "cylinder1PosX", -60, 60).onChange(function () {
+            cylinder1.position.set(controls.cylinder1PosX, controls.cylinder1PosY, controls.cylinder1PosZ)
+        });
+        guicylinder1.add(controls, "cylinder1PosY", -60, 60).onChange(function () {
+            cylinder1.position.set(controls.cylinder1PosX, controls.cylinder1PosY, controls.cylinder1PosZ)
+        });
+        guicylinder1.add(controls, "cylinder1PosZ", -60, 60).onChange(function () {
+            cylinder1.position.set(controls.cylinder1PosX, controls.cylinder1PosY, controls.cylinder1PosZ)
+        });
+        guicylinder1.add(controls, "scaleX", 0, 10).onChange(function (e) {
+            cylinder1.scale.x = e
+        });
+        guicylinder1.add(controls, "scaleY", 0, 10).onChange(function (e) {
+            cylinder1.scale.y = e
+        });
+        guicylinder1.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+            cylinder1.scale.z = e
+        });
+        guicylinder1.add(controls, "actioncylinder1", ["subtract", "intersect", "union", "none"]);
+
+        var guicylinder2 = gui.addFolder("cylinder2");
+        guicylinder2.add(controls, "cylinder2PosX", -60, 60).onChange(function () {
+            cylinder2.position.set(controls.cylinder2PosX, controls.cylinder2PosY, controls.cylinder2PosZ)
+        });
+        guicylinder2.add(controls, "cylinder2PosY", -60, 60).onChange(function () {
+            cylinder2.position.set(controls.cylinder2PosX, controls.cylinder2PosY, controls.cylinder2PosZ)
+        });
+        guicylinder2.add(controls, "cylinder2PosZ", -60, 60).onChange(function () {
+            cylinder2.position.set(controls.cylinder2PosX, controls.cylinder2PosY, controls.cylinder2PosZ)
+        });
+        guicylinder2.add(controls, "scaleX", 0, 10).onChange(function (e) {
+            cylinder2.scale.x = e
+        });
+        guicylinder2.add(controls, "scaleY", 0, 10).onChange(function (e) {
+            cylinder2.scale.y = e
+        });
+        guicylinder2.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+            cylinder2.scale.z = e
+        });
+        guicylinder2.add(controls, "actioncylinder2", ["subtract", "intersect", "union", "none"]);
+
+        var guicylinder3 = gui.addFolder("cylinder3");
+        guicylinder3.add(controls, "cylinder3PosX", -60, 60).onChange(function () {
+            cylinder3.position.set(controls.cylinder3PosX, controls.cylinder3PosY, controls.cylinder3PosZ)
+        });
+        guicylinder3.add(controls, "cylinder3PosY", -60, 60).onChange(function () {
+            cylinder3.position.set(controls.cylinder3PosX, controls.cylinder3PosY, controls.cylinder3PosZ)
+        });
+        guicylinder3.add(controls, "cylinder3PosZ", -60, 60).onChange(function () {
+            cylinder3.position.set(controls.cylinder3PosX, controls.cylinder3PosY, controls.cylinder3PosZ)
+        });
+        guicylinder3.add(controls, "scaleX", 0, 10).onChange(function (e) {
+            cylinder3.scale.x = e
+        });
+        guicylinder3.add(controls, "scaleY", 0, 10).onChange(function (e) {
+            cylinder3.scale.y = e
+        });
+        guicylinder3.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+            cylinder3.scale.z = e
+        });
+        guicylinder3.add(controls, "actioncylinder3", ["subtract", "intersect", "union", "none"]);
+
+        var guirectangle1 = gui.addFolder("rectangle1");
+        guirectangle1.add(controls, "rectangle1PosX", -60, 60).onChange(function () {
+            rectangle1.position.set(controls.rectangle1PosX, controls.rectangle1PosY, controls.rectangle1PosZ)
+        });
+        guirectangle1.add(controls, "rectangle1PosY", -60, 60).onChange(function () {
+            rectangle1.position.set(controls.rectangle1PosX, controls.rectangle1PosY, controls.rectangle1PosZ)
+        });
+        guirectangle1.add(controls, "rectangle1PosZ", -60, 60).onChange(function () {
+            rectangle1.position.set(controls.rectangle1PosX, controls.rectangle1PosY, controls.rectangle1PosZ)
+        });
+        guirectangle1.add(controls, "scaleX", 0, 100).onChange(function (e) {
+            rectangle1.scale.x = e
+        });
+        guirectangle1.add(controls, "scaleY", 0, 100).onChange(function (e) {
+            rectangle1.scale.y = e
+        });
+        guirectangle1.add(controls, "scaleZ", 0, 100).onChange(function (e) {
+            rectangle1.scale.z = e
+        });
+        guirectangle1.add(controls, "actionrectangle1", ["subtract", "intersect", "union", "none"]);
+
+        /*比率scaleで可変
+        var guirectangle1 = gui.addFolder("rectangle1");
+        guirectangle1.add(controls, "rectangle1PosX", -15, 15).onChange(function () {
+            rectangle1.position.set(controls.rectangle1PosX, controls.rectangle1PosY, controls.rectangle1PosZ)
+        });
+        guirectangle1.add(controls, "rectangle1PosY", -15, 15).onChange(function () {
+            rectangle1.position.set(controls.rectangle1PosX, controls.rectangle1PosY, controls.rectangle1PosZ)
+        });
+        guirectangle1.add(controls, "rectangle1PosZ", -15, 15).onChange(function () {
+            rectangle1.position.set(controls.rectangle1PosX, controls.rectangle1PosY, controls.rectangle1PosZ)
+        });
+        guirectangle1.add(controls, "rectangle1Scale", 0, 10).onChange(function (e) {
+            rectangle1.scale.set(e, e, e)
+        });
+        guirectangle1.add(controls, "actionSphere", ["subtract", "intersect", "union", "none"]);
+        */
+
+        var guirectangle2 = gui.addFolder("rectangle2");
+        guirectangle2.add(controls, "rectangle2PosX", -60, 60).onChange(function () {
+            rectangle2.position.set(controls.rectangle2PosX, controls.rectangle2PosY, controls.rectangle2PosZ)
+        });
+        guirectangle2.add(controls, "rectangle2PosY", -60, 60).onChange(function () {
+            rectangle2.position.set(controls.rectangle2PosX, controls.rectangle2PosY, controls.rectangle2PosZ)
+        });
+        guirectangle2.add(controls, "rectangle2PosZ", -60, 60).onChange(function () {
+            rectangle2.position.set(controls.rectangle2PosX, controls.rectangle2PosY, controls.rectangle2PosZ)
+        });
+        guirectangle2.add(controls, "scaleX", 0, 10).onChange(function (e) {
+            rectangle2.scale.x = e
+        });
+        guirectangle2.add(controls, "scaleY", 0, 10).onChange(function (e) {
+            rectangle2.scale.y = e
+        });
+        guirectangle2.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+            rectangle2.scale.z = e
+        });
+        guirectangle2.add(controls, "actionrectangle2", ["subtract", "intersect", "union", "none"]);
+
+        var guirectangle3 = gui.addFolder("rectangle3");
+        guirectangle3.add(controls, "rectangle3PosX", -60, 60).onChange(function () {
+            rectangle3.position.set(controls.rectangle3PosX, controls.rectangle3PosY, controls.rectangle3PosZ)
+        });
+        guirectangle3.add(controls, "rectangle3PosY", -60, 60).onChange(function () {
+            rectangle3.position.set(controls.rectangle3PosX, controls.rectangle3PosY, controls.rectangle3PosZ)
+        });
+        guirectangle3.add(controls, "rectangle3PosZ", -60, 60).onChange(function () {
+            rectangle3.position.set(controls.rectangle3PosX, controls.rectangle3PosY, controls.rectangle3PosZ)
+        });
+        guirectangle3.add(controls, "scaleX", 0, 10).onChange(function (e) {
+            rectangle3.scale.x = e
+        });
+        guirectangle3.add(controls, "scaleY", 0, 10).onChange(function (e) {
+            rectangle3.scale.y = e
+        });
+        guirectangle3.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+            rectangle3.scale.z = e
+        });
+        guirectangle3.add(controls, "actionrectangle3", ["subtract", "intersect", "union", "none"]);
+
+        var guisonyMesh1 = gui.addFolder("MESH1");
+        guisonyMesh1.add(controls, "sonyMesh1PosX", -100, 100).onChange(function () {
+            sonyMesh1.position.set(controls.sonyMesh1PosX, controls.sonyMesh1PosY, controls.sonyMesh1PosZ)
+        });
+        guisonyMesh1.add(controls, "sonyMesh1PosY", -100, 100).onChange(function () {
+            sonyMesh1.position.set(controls.sonyMesh1PosX, controls.sonyMesh1PosY, controls.sonyMesh1PosZ)
+        });
+        guisonyMesh1.add(controls, "sonyMesh1PosZ", -100, 100).onChange(function () {
+            sonyMesh1.position.set(controls.sonyMesh1PosX, controls.sonyMesh1PosY, controls.sonyMesh1PosZ)
+        });
+        guisonyMesh1.add(controls, "actionrectangle3", ["subtract", "union", "none"]);
+
+        var guisonyMesh2 = gui.addFolder("MESH2");
+        guisonyMesh2.add(controls, "sonyMesh2PosX", -100, 100).onChange(function () {
+            sonyMesh2.position.set(controls.sonyMesh2PosX, controls.sonyMesh2PosY, controls.sonyMesh2PosZ)
+        });
+        guisonyMesh2.add(controls, "sonyMesh2PosY", -100, 100).onChange(function () {
+            sonyMesh2.position.set(controls.sonyMesh2PosX, controls.sonyMesh2PosY, controls.sonyMesh2PosZ)
+        });
+        guisonyMesh2.add(controls, "sonyMesh2PosZ", -100, 100).onChange(function () {
+            sonyMesh2.position.set(controls.sonyMesh2PosX, controls.sonyMesh2PosY, controls.sonyMesh2PosZ)
+        });
+        guisonyMesh2.add(controls, "actionrectangle3", ["subtract",  "union", "none"]);
+
+        var guisonyMesh3 = gui.addFolder("MESH3");
+        guisonyMesh3.add(controls, "sonyMesh3PosX", -100, 100).onChange(function () {
+            sonyMesh3.position.set(controls.sonyMesh3PosX, controls.sonyMesh3PosY, controls.sonyMesh3PosZ)
+        });
+        guisonyMesh3.add(controls, "sonyMesh3PosY", -100, 100).onChange(function () {
+            sonyMesh3.position.set(controls.sonyMesh3PosX, controls.sonyMesh3PosY, controls.sonyMesh3PosZ)
+        });
+        guisonyMesh3.add(controls, "sonyMesh3PosZ", -100, 100).onChange(function () {
+            sonyMesh3.position.set(controls.sonyMesh3PosX, controls.sonyMesh3PosY, controls.sonyMesh3PosZ)
+        });
+        guisonyMesh3.add(controls, "actionrectangle3", ["subtract", "union", "none"]);
+
+
+        //ブーリアン演算の結果を表示
+        gui.add(controls, "showResult");
+        //モデルを回転させる
+        gui.add(controls, "rotateResult");
+        //ワイヤーフレームを非表示にする
+        gui.add(controls, "hideWireframes").onChange(function () {
+            if (controls.hideWireframes) {
+                dammyBase.material.visible = false;
+                base.material.visible = false;
+                rectangle1.material.visible = false;
+                rectangle2.material.visible = false;
+                rectangle3.material.visible = false;
+                cylinder1.material.visible = false;
+                cylinder2.material.visible = false;
+                cylinder3.material.visible = false;
+                sonyMesh1.material.visible = false;
+                sonyMesh2.material.visible = false;
+                sonyMesh3.material.visible = false;
+            } else {
+                dammyBase.material.visible = true;
+                base.material.visible = true;
+                rectangle1.material.visible = true;
+                rectangle2.material.visible = true;
+                rectangle3.material.visible = true;
+                cylinder1.material.visible = true;
+                cylinder2.material.visible = true;
+                cylinder3.material.visible = true;
+                sonyMesh1.material.visible = true;
+                sonyMesh2.material.visible = true;
+                sonyMesh3.material.visible = true;
+            }
+        });
+
+        render();
+
+        var spinner;
+
+        function redrawResult() {
+
+            showSpinner();
+
+            // make the call async to avoid blocking the thread. Need
+            // to set timeout > 1, if not executed immediately.
+            setTimeout(function () {
+                scene.remove(result);
+                var dammyBaseBSP = new ThreeBSP(dammyBase);
+                var baseBSP = new ThreeBSP(base);
+                var cylinder12BSP = new ThreeBSP(cylinder1);
+                var cylinder22BSP = new ThreeBSP(cylinder2);
+                var cylinder32BSP = new ThreeBSP(cylinder3);
+                var rectangle1BSP = new ThreeBSP(rectangle1);
+                var rectangle22BSP = new ThreeBSP(rectangle2);
+                var rectangle32BSP = new ThreeBSP(rectangle3);
+                var sonyMesh1BSP = new ThreeBSP(sonyMesh1);
+                var sonyMesh22BSP = new ThreeBSP(sonyMesh2);
+                var sonyMesh32BSP = new ThreeBSP(sonyMesh3);
+                var resultBSP;
+
+
+                // next do the base
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actionbase) {
+                    case "subtract":
+                        resultBSP = dammyBaseBSP.subtract(baseBSP);
+                        break;
+                    case "intersect":
+                        resultBSP = dammyBaseBSP.intersect(baseBSP);
+                        break;
+                    case "union":
+                        resultBSP = dammyBaseBSP.union(baseBSP);
+                        break;
+                    case "none": // noop;
+                }
+
+
+                // next do the cylinder1
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actioncylinder1) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(cylinder12BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(cylinder12BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(cylinder12BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+                // next do the cylinder2
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actioncylinder2) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(cylinder22BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(cylinder22BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(cylinder22BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+                // next do the cylinder3
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actioncylinder3) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(cylinder32BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(cylinder32BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(cylinder32BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+                // first do the rectangle1
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actionrectangle1) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(rectangle1BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(rectangle1BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(rectangle1BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+                // next do the rectangle2
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actionrectangle2) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(rectangle22BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(rectangle22BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(rectangle22BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+                // next do the rectangle3
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actionrectangle3) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(rectangle32BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(rectangle32BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(rectangle32BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+                // next do the sonyMesh1
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actionsonyMesh1) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(sonyMesh12BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(sonyMesh12BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(sonyMesh12BSP);
+                        break;
+                    case "none": // noop;
+                }
+
+              // next do the sonyMesh2
+              if (!resultBSP) resultBSP = dammyBaseBSP;
+              switch (controls.actionsonyMesh2) {
+                   case "subtract":
+                       resultBSP = resultBSP.subtract(sonyMesh22BSP);
+                       break;
+                   case "intersect":
+                       resultBSP = resultBSP.intersect(sonyMesh22BSP);
+                       break;
+                   case "union":
+                       resultBSP = resultBSP.union(sonyMesh22BSP);
+                       break;
+                   case "none": // noop;
+               }
+              // next do the sonyMesh3
+              if (!resultBSP) resultBSP = dammyBaseBSP;
+              switch (controls.actionsonyMesh3) {
+                   case "subtract":
+                       resultBSP = resultBSP.subtract(sonyMesh32BSP);
+                       break;
+                   case "intersect":
+                       resultBSP = resultBSP.intersect(sonyMesh32BSP);
+                       break;
+                   case "union":
+                       resultBSP = resultBSP.union(sonyMesh32BSP);
+                       break;
+                   case "none": // noop;
+               }
+
+                if (controls.actionbase === "none" && controls.actionrectangle2 === "none" && controls.actionSphere === "none" && controls.actionrectangle3 === "none" && controls.actioncylinder1 === "none" && controls.actioncylinder2 === "none" && controls.actioncylinder3 === "none" && controls.actioncsonyMesh1 === "none" ) {
+                    // do nothing
+                } else {
+                    result = resultBSP.toMesh();
+                    result.geometry.computeFaceNormals();
+                    result.geometry.computeVertexNormals();
+                    scene.add(result);
+                }
+
+                hideSpinner(spinner);
+            }, 200);
+        }
+
+        function createMesh(geom) {
+
+            // assign two materials
+            var meshMaterial = new THREE.MeshNormalMaterial();
+            meshMaterial.side = THREE.DoubleSide;
+            var wireFrameMat = new THREE.MeshBasicMaterial({opacity: 0.5, wireframeLinewidth: 0.5});
+            wireFrameMat.wireframe = true;
+
+            // create a multimaterial
+            var mesh = new THREE.Mesh(geom, wireFrameMat);
+
+            return mesh;
+        }
+
+
+        function showSpinner() {
+
+            var opts = {
+                lines: 13, // The number of lines to draw
+                length: 20, // The length of each line
+                width: 10, // The line thickness
+                radius: 30, // The radius of the inner circle
+                corners: 1, // Corner roundness (0..1)
+                rotate: 0, // The rotation offset
+                direction: 1, // 1: clockwise, -1: counterclockwise
+                color: '#000', // #rgb or #rrggbb or array of colors
+                speed: 1, // Rounds per second
+                trail: 60, // Afterglow percentage
+                shadow: false, // Whether to render a shadow
+                hwaccel: false, // Whether to use hardware acceleration
+                className: 'spinner', // The CSS class to assign to the spinner
+                zIndex: 2e9, // The z-index (defaults to 2000000000)
+                top: '50%', // Top position relative to parent in px
+                left: '50%' // Left position relative to parent in px
+            };
+            var target = document.getElementById('WebGL-output');
+            spinner = new Spinner(opts).spin(target);
+            return spinner;
+        }
+
+        function hideSpinner(spinner) {
+            spinner.stop();
+        }
+
+        function render() {
+
+            stats.update();
+
+
+
+//            sphere.rotation.y=step+=0.01;
+
+//            if (typeof  ThreeBSP!='undefined') {console.log(ThreeBSP)};
+//            console.log(ThreeBSP);
+
+            if (controls.rotateResult && result) {
+                result.rotation.y += 0.04;
+                //      result.rotation.x+=0.04;
+                result.rotation.z -= 0.005;
+            }
+
+            // render using requestAnimationFrame
+
+            requestAnimationFrame(render);
+            cameraControl.update();
+            webGLRenderer.render(scene, camera);
+
+        }
+
+
+
+        function initStats() {
+
+            var stats = new Stats();
+            stats.setMode(0); // 0: fps, 1: ms
+
+            // Align top-left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+
+            document.getElementById("Stats-output").appendChild(stats.domElement);
+
+            return stats;
+        }
+
+};
+
+    window.onload = init();
+
+    //stlダウンロードASCII
+    function exportASCII() {
+
+      var result1 = exporter.parse( result );
+      saveString( result1, 'toolstand.stl' );
+
+    }
+    //stlダウンロードBinary
+    function exportBinary() {
+
+      var result1 = exporter.parse( mesh, { binary: true } );
+      saveArrayBuffer( result1, 'toolstand.stl' );
+
+    }
+    var link = document.createElement( 'a' );
+    link.style.display = 'none';
+    document.body.appendChild( link );
+
+    function save( blob, filename ) {
+
+      link.href = URL.createObjectURL( blob );
+      link.download = filename;
+      link.click();
+
+    }
+
+    function saveString( text, filename ) {
+
+      save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+    }
+
+    function saveArrayBuffer( buffer, filename ) {
+
+      save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+    }
+
+</script>
+</body>
+</html>
