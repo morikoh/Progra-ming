@@ -6,7 +6,6 @@
     <title>Tool Stand Generator</title>
     <meta http-equiv="content-type" charset="utf-8">
     <script type="text/javascript" src="../three.js/libs/three.js"></script>
-
     <script type="text/javascript" src="../three.js/libs/stats.js"></script>
     <script type="text/javascript" src="../three.js/libs/dat.gui.js"></script>
     <script type="text/javascript" src="../three.js/libs/spin.js"></script>
@@ -42,8 +41,8 @@
 
   <div id="info">
     <!--<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a>-->
-    Tool Stand Generator Ver.1.0<br/><br/>
-    ①[cylinder1]～[rectangle3]を操作してカスタマイズする</br>②[showResult]をクリックする</br>③下のボタンを押す</br>
+    Tool Stand Generator Ver.2.0<br/><br/> <!--baseのサイズを変更できるようになった-->
+    ①[base]～[rectangle3]を操作してカスタマイズする</br>②[showResult]をクリックする</br>③下のボタンを押す</br>
     <button onclick="exportASCII()">Download STL File</button>
     <!--
     <button onclick="exportBinary()">export Binary</button>
@@ -74,9 +73,6 @@
         var scene = new THREE.Scene();
         // create a camera, which defines where we're looking at.
         var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-
-
-
 
 /*
         scene.background = new THREE.Color( 0xa0a0a0 );
@@ -132,35 +128,40 @@
         // カメラを生成した変数を渡してインスタンスを生成
         var cameraControl = new THREE.OrbitControls(camera, webGLRenderer.domElement);
 
-        //ベースとなる図形
+        //プログラム上でベースとなる図形
+        var dammyBase = createMesh(new THREE.BoxGeometry(0.1, 0.1, 0.1));
+        dammyBase.position.x = 0;
+
+        //実質的にベースとなる図形
         var base = createMesh(new THREE.BoxGeometry(60, 60, 40));
         base.position.x = 0;
 
         //substractする図形1
-        var rectangle1 = createMesh(new THREE.BoxGeometry(10, 60, 10));
-        rectangle1.position.set(-20, 10, -10);
-
-        //substractする図形2
-        var rectangle2 = createMesh(new THREE.BoxGeometry(10, 60, 10));
-        rectangle2.position.set(0, 10, -10);
-
-        //substractする図形3
-        var rectangle3 = createMesh(new THREE.BoxGeometry(10, 60, 10));
-        rectangle3.position.set(20, 10, -10);
-
-        //substractする図形4
         var cylinder1 = createMesh(new THREE.CylinderGeometry(5, 5, 60));
         cylinder1.position.set(-20, 10, 10);
 
-        //substractする図形5
+        //substractする図形2
         var cylinder2 = createMesh(new THREE.CylinderGeometry(5, 5, 60));
         cylinder2.position.set(-0, 10, 10);
 
-        //substractする図形5
+        //substractする図形3
         var cylinder3 = createMesh(new THREE.CylinderGeometry(5, 5, 60));
         cylinder3.position.set(20, 10, 10);
 
+        //substractする図形4
+        var rectangle1 = createMesh(new THREE.BoxGeometry(10, 60, 10));
+        rectangle1.position.set(-20, 10, -10);
+
+        //substractする図形5
+        var rectangle2 = createMesh(new THREE.BoxGeometry(10, 60, 10));
+        rectangle2.position.set(0, 10, -10);
+
+        //substractする図形6
+        var rectangle3 = createMesh(new THREE.BoxGeometry(10, 60, 10));
+        rectangle3.position.set(20, 10, -10);
+
         // add the 3D models to the scene
+        scene.add(dammyBase);
         scene.add(base);
         scene.add(rectangle1);
         scene.add(rectangle2);
@@ -184,6 +185,13 @@
 
         // setup the control gui
         var controls = new function () {
+
+            // this.dammyBasePosX = dammyBase.position.x;
+            // this.dammyBasePosY = dammyBase.position.y;
+            // this.dammyBasePosZ = dammyBase.position.z;
+            // this.scaleX = 1;
+            // this.scaleY = 1;
+            // this.scaleZ = 1;
 
             this.basePosX = base.position.x;
             this.basePosY = base.position.y;
@@ -234,13 +242,13 @@
             this.scaleY = 1;
             this.scaleZ = 1;
 
+            this.actionbase = "union";
             this.actionrectangle1 = "subtract"; // add, substract, intersect
             this.actionrectangle2 = "subtract"; // add, substract, intersect
             this.actionrectangle3 = "subtract"; // add, substract, intersect
             this.actioncylinder1 = "subtract"; // add, substract, intersect
             this.actioncylinder2 = "subtract"; // add, substract, intersect
             this.actioncylinder3 = "subtract"; // add, substract, intersect
-            this.actionSphere = "subtract";
 
             this.showResult = function () {
                 redrawResult();
@@ -253,16 +261,37 @@
 
         var gui = new dat.GUI();
 
+        // var guidammyBase = gui.addFolder("dammyBase");
+        // guidammyBase.add(controls, "dammyBasePosX", -15, 15).onChange(function () {
+        //     dammyBase.position.set(controls.dammyBasePosX, controls.dammyBasePosY, controls.dammyBasePosZ)
+        // });
+        // guidammyBase.add(controls, "dammyBasePosY", -15, 15).onChange(function () {
+        //     dammyBase.position.set(controls.dammyBasePosX, controls.dammyBasePosY, controls.dammyBasePosZ)
+        // });
+        // guidammyBase.add(controls, "dammyBasePosZ", -15, 15).onChange(function () {
+        //     dammyBase.position.set(controls.dammyBasePosX, controls.dammyBasePosY, controls.dammyBasePosZ)
+        // });
+        // guidammyBase.add(controls, "scaleX", 0, 10).onChange(function (e) {
+        //     dammyBase.scale.x = e
+        // });
+        // guidammyBase.add(controls, "scaleY", 0, 10).onChange(function (e) {
+        //     dammyBase.scale.y = e
+        // });
+        // guidammyBase.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+        //     dammyBase.scale.z = e
+        // });
+
+
         var guibase = gui.addFolder("base");
-        guibase.add(controls, "basePosX", -15, 15).onChange(function () {
-            base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
-        });
-        guibase.add(controls, "basePosY", -15, 15).onChange(function () {
-            base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
-        });
-        guibase.add(controls, "basePosZ", -15, 15).onChange(function () {
-            base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
-        });
+        // guibase.add(controls, "basePosX", -60, 60).onChange(function () {
+        //     base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
+        // });
+        // guibase.add(controls, "basePosY", -60, 60).onChange(function () {
+        //     base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
+        // });
+        // guibase.add(controls, "basePosZ", -60, 60).onChange(function () {
+        //     base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
+        // });
         guibase.add(controls, "scaleX", 0, 10).onChange(function (e) {
             base.scale.x = e
         });
@@ -272,21 +301,8 @@
         guibase.add(controls, "scaleZ", 0, 10).onChange(function (e) {
             base.scale.z = e
         });
-        /*
-        var guibase = gui.addFolder("base");
-        guibase.add(controls, "basePosX", -15, 15).onChange(function () {
-            base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
-        });
-        guibase.add(controls, "basePosY", -15, 15).onChange(function () {
-            base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
-        });
-        guibase.add(controls, "basePosZ", -15, 15).onChange(function () {
-            base.position.set(controls.basePosX, controls.basePosY, controls.basePosZ)
-        });
-        guibase.add(controls, "baseScale", 0, 10).onChange(function (e) {
-            base.scale.set(e, e, e)
-        });
-        */
+        guibase.add(controls, "actionbase", ["subtract", "intersect", "union", "none"]);
+
         var guicylinder1 = gui.addFolder("cylinder1");
         guicylinder1.add(controls, "cylinder1PosX", -60, 60).onChange(function () {
             cylinder1.position.set(controls.cylinder1PosX, controls.cylinder1PosY, controls.cylinder1PosZ)
@@ -430,64 +446,30 @@
         });
         guirectangle3.add(controls, "actionrectangle3", ["subtract", "intersect", "union", "none"]);
 
-
+        //ブーリアン演算の結果を表示
         gui.add(controls, "showResult");
+        //モデルを回転させる
         gui.add(controls, "rotateResult");
+        //ワイヤーフレームを非表示にする
         gui.add(controls, "hideWireframes").onChange(function () {
             if (controls.hideWireframes) {
+                dammyBase.material.visible = false;
                 base.material.visible = false;
                 rectangle1.material.visible = false;
                 rectangle2.material.visible = false;
+                rectangle3.material.visible = false;
+                cylinder1.material.visible = false;
+                cylinder2.material.visible = false;
+                cylinder3.material.visible = false;
+
             } else {
+                dammyBase.material.visible = true;
                 base.material.visible = true;
                 rectangle1.material.visible = true;
                 rectangle2.material.visible = true;
-            }
-        });
-        gui.add(controls, "hideWireframes").onChange(function () {
-            if (controls.hideWireframes) {
-                base.material.visible = false;
-                rectangle1.material.visible = false;
-                rectangle3.material.visible = false;
-            } else {
-                base.material.visible = true;
-                rectangle1.material.visible = true;
                 rectangle3.material.visible = true;
-            }
-        });
-
-        gui.add(controls, "hideWireframes").onChange(function () {
-            if (controls.hideWireframes) {
-                base.material.visible = false;
-                rectangle1.material.visible = false;
-                cylinder1.material.visible = false;
-            } else {
-                base.material.visible = true;
-                rectangle1.material.visible = true;
                 cylinder1.material.visible = true;
-            }
-        });
-
-        gui.add(controls, "hideWireframes").onChange(function () {
-            if (controls.hideWireframes) {
-                base.material.visible = false;
-                rectangle1.material.visible = false;
-                cylinder2.material.visible = false;
-            } else {
-                base.material.visible = true;
-                rectangle1.material.visible = true;
                 cylinder2.material.visible = true;
-            }
-        });
-
-        gui.add(controls, "hideWireframes").onChange(function () {
-            if (controls.hideWireframes) {
-                base.material.visible = false;
-                rectangle1.material.visible = false;
-                cylinder3.material.visible = false;
-            } else {
-                base.material.visible = true;
-                rectangle1.material.visible = true;
                 cylinder3.material.visible = true;
             }
         });
@@ -504,6 +486,7 @@
             // to set timeout > 1, if not executed immediately.
             setTimeout(function () {
                 scene.remove(result);
+                var dammyBaseBSP = new ThreeBSP(dammyBase);
                 var baseBSP = new ThreeBSP(base);
                 var rectangle1BSP = new ThreeBSP(rectangle1);
                 var rectangle22BSP = new ThreeBSP(rectangle2);
@@ -514,23 +497,40 @@
 
                 var resultBSP;
 
-                // next do the cylinder1
-                if (!resultBSP) resultBSP = baseBSP;
-                switch (controls.actioncylinder1) {
+
+                // next do the base
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actionbase) {
                     case "subtract":
-                        resultBSP = baseBSP.subtract(cylinder12BSP);
+                        resultBSP = dammyBaseBSP.subtract(baseBSP);
                         break;
                     case "intersect":
-                        resultBSP = baseBSP.intersect(cylinder12BSP);
+                        resultBSP = dammyBaseBSP.intersect(baseBSP);
                         break;
                     case "union":
-                        resultBSP = baseBSP.union(cylinder12BSP);
+                        resultBSP = dammyBaseBSP.union(baseBSP);
+                        break;
+                    case "none": // noop;
+                }
+
+
+                // next do the cylinder1
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actioncylinder1) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(cylinder12BSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(cylinder12BSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(cylinder12BSP);
                         break;
                     case "none": // noop;
                 }
 
                 // next do the cylinder2
-                if (!resultBSP) resultBSP = baseBSP;
+                if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actioncylinder2) {
                     case "subtract":
                         resultBSP = resultBSP.subtract(cylinder22BSP);
@@ -545,7 +545,7 @@
                 }
 
                 // next do the cylinder3
-                if (!resultBSP) resultBSP = baseBSP;
+                if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actioncylinder3) {
                     case "subtract":
                         resultBSP = resultBSP.subtract(cylinder32BSP);
@@ -560,6 +560,7 @@
                 }
 
                 // first do the rectangle1
+                if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actionrectangle1) {
                     case "subtract":
                         resultBSP = resultBSP.subtract(rectangle1BSP);
@@ -574,7 +575,7 @@
                 }
 
                 // next do the rectangle2
-                if (!resultBSP) resultBSP = baseBSP;
+                if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actionrectangle2) {
                     case "subtract":
                         resultBSP = resultBSP.subtract(rectangle22BSP);
@@ -589,7 +590,7 @@
                 }
 
                 // next do the rectangle3
-                if (!resultBSP) resultBSP = baseBSP;
+                if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actionrectangle3) {
                     case "subtract":
                         resultBSP = resultBSP.subtract(rectangle32BSP);
@@ -604,7 +605,7 @@
                 }
 
 
-                if (controls.actionrectangle2 === "none" && controls.actionSphere === "none" && controls.actionrectangle3 === "none" && controls.actioncylinder1 === "none" === "none" && controls.actioncylinder2 === "none" && controls.actioncylinder3 === "none") {
+                if (controls.actionbase === "none" && controls.actionrectangle2 === "none" && controls.actionSphere === "none" && controls.actionrectangle3 === "none" && controls.actioncylinder1 === "none" === "none" && controls.actioncylinder2 === "none" && controls.actioncylinder3 === "none") {
                     // do nothing
                 } else {
                     result = resultBSP.toMesh();
