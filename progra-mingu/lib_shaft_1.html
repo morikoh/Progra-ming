@@ -3,7 +3,7 @@
 <html>
 
 <head>
-    <title>Example 06.08 - Binary operations</title>
+    <title>lib_shaft</title>
     <script type="text/javascript" src="../three.js/libs/three.js"></script>
 
     <script type="text/javascript" src="../three.js/libs/stats.js"></script>
@@ -37,7 +37,7 @@
 <body>
 
   <div id="info">
-    <a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> Shaft Generator<br/><br/>
+    <a>Shaft Generator</a><br/><br/>
     <button onclick="exportASCII()">export ASCII</button> <button onclick="exportBinary()">export binary</button>
   </div>
 
@@ -106,18 +106,29 @@ var exporter = new THREE.STLExporter();
         webGLRenderer.setSize(window.innerWidth, window.innerHeight);
         webGLRenderer.shadowMap.enabled = true;
 
-        var shape = createMesh(new THREE.ShapeGeometry(drawShape()));
-        shape.position.x = -2;
+        // var shape = createMesh(new THREE.ShapeGeometry(drawShape()));
+        // shape.position.x = -2;
 
-        var shaft = createMesh(new THREE.BoxGeometry(7.8, 7.88, 30));
-        shaft.position.set(0, 0, 0);
 
-        //var result;
+
+        //プログラム上でベースとなる図形
+        var dammyBase = createMesh(new THREE.BoxGeometry(0.1, 0.1, 0.1));
+        dammyBase.position.x = 0;
+
+        var shaftRectangle = createMesh(new THREE.BoxGeometry(7.8, 7.88, 34));
+        shaftRectangle.position.set(0, 0, 0);
+
+        var shaftCylinder = createMesh(new THREE.CylinderGeometry(20, 20, 20, 36));
+        // shaftCylinder.radialSegments= 12;
+        shaftCylinder.position.set(0, 0, 0);
+        shaftCylinder.rotation.x = 0.5 * Math.PI;
 
 
         // add the sphere to the scene
-        scene.add(shape);
-        scene.add(shaft);
+        // scene.add(shape);
+        scene.add(dammyBase);
+        scene.add(shaftRectangle);
+        scene.add(shaftCylinder);
 
         // position and point the camera to the center of the scene
         camera.position.x = 0;
@@ -136,20 +147,77 @@ var exporter = new THREE.STLExporter();
         // setup the control gui
         var controls = new function () {
 
-            this.shapePosX = shape.position.x;
-            this.shapePosY = shape.position.y;
-            this.shapePosZ = shape.position.z;
-            this.shapeScale = 1;
+            // this.shapePosX = shape.position.x;
+            // this.shapePosY = shape.position.y;
+            // this.shapePosZ = shape.position.z;
+            // this.shapeScale = 1;
 
-            this.shaftPosX = shaft.position.x;
-            this.shaftPosY = shaft.position.y;
-            this.shaftPosZ = shaft.position.z;
+            this.shaftRectanglePosX = shaftRectangle.position.x;
+            this.shaftRectanglePosY = shaftRectangle.position.y;
+            this.shaftRectanglePosZ = shaftRectangle.position.z;
             this.scaleX = 1;
             this.scaleY = 1;
             this.scaleZ = 1;
 
-            this.actionshaft = "union"; // add, substract, intersect
-            this.actionSphere = "union";
+            this.shaftCylinderPosX = shaftCylinder.position.x;
+            this.shaftCylinderPosY = shaftCylinder.position.y;
+            this.shaftCylinderPosZ = shaftCylinder.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            //cylinderに関する項目
+            this.radius = 20;
+            // this.radiusBottom = 20;
+            this.height = 20;
+            this.radialSegments = 36;
+            this.heightSegments = 8;
+            this.openEnded = false;
+            this.thetaStart = 0;
+            this.thetaLength = 2 * Math.PI;
+
+            //rectangleに関する項目
+            this.shaftRectangleWidth = 7.8;
+            this.shaftRectangleHeight = 7.8;
+            this.shaftRectangleDepth = 37;
+
+            //パラメーター変更を反映
+            this.redraw = function () {
+                // remove the old plane
+                scene.remove(shaftCylinder);
+                scene.remove(shaftRectangle);
+                // create a new one
+
+                shaftCylinder = createMesh(new THREE.CylinderGeometry(controls.radius, controls.radius, controls.height, controls.radialSegments, controls.heightSegments, controls.openEnded, controls.thetaStart, controls.thetaLength));
+                shaftCylinder.rotation.x = 0.5 * Math.PI;
+                shaftRectangle = createMesh(new THREE.BoxGeometry(controls.shaftRectangleWidth, controls.shaftRectangleHeight, controls.height+14 ));
+                // add it to the scene.
+                scene.add(shaftCylinder);
+                scene.add(shaftRectangle);
+            };
+
+
+            // this.shaftRectangleWidth = shaftRectangle.children[0].geometry.parameters.width;
+            // this.shaftRectangleHeight = shaftRectangle.children[0].geometry.parameters.height;
+            // this.shaftRectangleDepth = shaftRectangle.children[0].geometry.parameters.depth;
+
+            // this.widthSegments = cube.children[0].geometry.parameters.widthSegments;
+            // this.heightSegments = cube.children[0].geometry.parameters.heightSegments;
+            // this.depthSegments = cube.children[0].geometry.parameters.depthSegments;
+
+            //rectangleのパラメーター変更を反映
+            // this.redraw2 = function () {
+            //     // remove the old plane
+            //     scene.remove(shaftRectangle);
+            //     // create a new one
+            //     shaftRectangle = createMesh(new THREE.BoxGeometry(controls.shaftRectangleWidth, controls.shaftRectangleHeight, controls.height+14 ));
+            //     // add it to the scene.
+            //     scene.add(shaftRectangle);
+            // };
+
+
+            this.actionshaftRectangle = "union"; // add, substract, intersect
+            this.actionshaftCylinder = "union"; // add, substract, intersect
 
             this.showResult = function () {
                 redrawResult();
@@ -167,91 +235,126 @@ var exporter = new THREE.STLExporter();
             this.curveSegments = 12;
             this.steps = 1;
 
-            this.asGeom = function () {
-                // remove the old plane
-                scene.remove(shape);
-                // create a new one
+            // this.asGeom = function () {
+            //     // remove the old plane
+            //     scene.remove(shape);
+            //     // create a new one
+            //
+            //     var options = {
+            //         amount: controls.amount,
+            //         bevelThickness: controls.bevelThickness,
+            //         bevelSize: controls.bevelSize,
+            //
+            //         bevelSegments: controls.bevelSegments,
+            //         bevelEnabled: controls.bevelEnabled,
+            //         curveSegments: controls.curveSegments,
+            //         steps: controls.steps
+            //     };
 
-                var options = {
-                    amount: controls.amount,
-                    bevelThickness: controls.bevelThickness,
-                    bevelSize: controls.bevelSize,
+                // shape = createMesh(new THREE.ExtrudeGeometry(drawShape(), options));
+                // // add it to the scene.
+                // scene.add(shape);
 
-                    bevelSegments: controls.bevelSegments,
-                    bevelEnabled: controls.bevelEnabled,
-                    curveSegments: controls.curveSegments,
-                    steps: controls.steps
-                };
-
-                shape = createMesh(new THREE.ExtrudeGeometry(drawShape(), options));
-                // add it to the scene.
-                scene.add(shape);
-
-            };
+            // };
 
 
         };
 
         var gui = new dat.GUI();
 
-        var guishape = gui.addFolder("shape");
-        guishape.add(controls, "shapePosX", -15, 15).onChange(function () {
-            shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
-        });
-        guishape.add(controls, "shapePosY", -15, 15).onChange(function () {
-            shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
-        });
-        guishape.add(controls, "shapePosZ", -15, 15).onChange(function () {
-            shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
-        });
-        guishape.add(controls, "shapeScale", 0, 10).onChange(function (e) {
-            shape.scale.set(e, e, e)
-        });
+        // var guishape = gui.addFolder("shape");
+        // guishape.add(controls, "shapePosX", -15, 15).onChange(function () {
+        //     shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
+        // });
+        // guishape.add(controls, "shapePosY", -15, 15).onChange(function () {
+        //     shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
+        // });
+        // guishape.add(controls, "shapePosZ", -15, 15).onChange(function () {
+        //     shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
+        // });
+        // guishape.add(controls, "shapeScale", 0, 10).onChange(function (e) {
+        //     shape.scale.set(e, e, e)
+        // });
+        var guishaftCylinder = gui.addFolder("shaftCylinder");
+        gui.add(controls, 'radius', 0, 80).onChange(controls.redraw);
+        // gui.add(controls, 'radiusBottom', 0, 80).onChange(controls.redraw);
+        gui.add(controls, 'height', 0, 40).onChange(controls.redraw);
+        // gui.add(controls, 'radialSegments', 1, 20).step(1).onChange(controls.redraw);
+        // gui.add(controls, 'heightSegments', 1, 20).step(1).onChange(controls.redraw);
+        // gui.add(controls, 'openEnded').onChange(controls.redraw);
+        // gui.add(controls, 'thetaStart', 0, 2 * Math.PI).onChange(controls.redraw);
+        // gui.add(controls, 'thetaLength', 0, 2 * Math.PI).onChange(controls.redraw);
 
-        var guishaft = gui.addFolder("shaft");
-        guishaft.add(controls, "shaftPosX", -15, 15).onChange(function () {
-            shaft.position.set(controls.shaftPosX, controls.shaftPosY, controls.shaftPosZ)
-        });
-        guishaft.add(controls, "shaftPosY", -15, 15).onChange(function () {
-            shaft.position.set(controls.shaftPosX, controls.shaftPosY, controls.shaftPosZ)
-        });
-        guishaft.add(controls, "shaftPosZ", -15, 15).onChange(function () {
-            shaft.position.set(controls.shaftPosX, controls.shaftPosY, controls.shaftPosZ)
-        });
-        guishaft.add(controls, "scaleX", 0, 10).onChange(function (e) {
-            shaft.scale.x = e
-        });
-        guishaft.add(controls, "scaleY", 0, 10).onChange(function (e) {
-            shaft.scale.y = e
-        });
-        guishaft.add(controls, "scaleZ", 0, 10).onChange(function (e) {
-            shaft.scale.z = e
-        });
-        guishaft.add(controls, "actionshaft", ["subtract", "intersect", "union", "none"]);
+        // var guishaftCylinder = gui.addFolder("shaftCylinder");
+        // guishaftCylinder.add(controls, "shaftCylinderPosX", -15, 15).onChange(function () {
+        //     shaftCylinder.position.set(controls.shaftCylinderPosX, controls.shaftCylinderPosY, controls.shaftCylinderPosZ)
+        // });
+        // guishaftCylinder.add(controls, "shaftCylinderPosY", -15, 15).onChange(function () {
+        //     shaftCylinder.position.set(controls.shaftCylinderPosX, controls.shaftCylinderPosY, controls.shaftCylinderPosZ)
+        // });
+        // guishaftCylinder.add(controls, "shaftCylinderPosZ", -15, 15).onChange(function () {
+        //     shaftCylinder.position.set(controls.shaftCylinderPosX, controls.shaftCylinderPosY, controls.shaftCylinderPosZ)
+        // });
+        // guishaftCylinder.add(controls, "scaleX", 0, 10).onChange(function (e) {
+        //     shaftCylinder.scale.x = e
+        // });
+        // guishaftCylinder.add(controls, "scaleY", 0, 10).onChange(function (e) {
+        //     shaftCylinder.scale.y = e
+        // });
+        // guishaftCylinder.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+        //     shaftCylinder.scale.z = e
+        // });
+        guishaftCylinder.add(controls, "actionshaftCylinder", ["subtract", "intersect", "union", "none"]);
+
+        // var guishaftRectangle = gui.addFolder("shaftRectangle");
+        // guishaftRectangle.add(controls, "shaftRectanglePosX", -15, 15).onChange(function () {
+        //     shaftRectangle.position.set(controls.shaftRectanglePosX, controls.shaftRectanglePosY, controls.shaftRectanglePosZ)
+        // });
+        // guishaftRectangle.add(controls, "shaftRectanglePosY", -15, 15).onChange(function () {
+        //     shaftRectangle.position.set(controls.shaftRectanglePosX, controls.shaftRectanglePosY, controls.shaftRectanglePosZ)
+        // });
+        // guishaftRectangle.add(controls, "shaftRectanglePosZ", -15, 15).onChange(function () {
+        //     shaftRectangle.position.set(controls.shaftRectanglePosX, controls.shaftRectanglePosY, controls.shaftRectanglePosZ)
+        // });
+        // guishaftRectangle.add(controls, "scaleX", 0, 10).onChange(function (e) {
+        //     shaftRectangle.scale.x = e
+        // });
+        // guishaftRectangle.add(controls, "scaleY", 0, 10).onChange(function (e) {
+        //     shaftRectangle.scale.y = e
+        // });
+        // guishaftRectangle.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+        //     shaftRectangle.scale.z = e
+        // });
+        // gui.add(controls, 'shaftRectangleWidth', 0, 40).onChange(controls.redraw);
+        // gui.add(controls, 'shaftRectangleHeight', 0, 40).onChange(controls.redraw);
+        // gui.add(controls, 'shaftRectangleDepth', 0, 40).onChange(controls.redraw);
+        // guishaftRectangle.add(controls, "actionshaftRectangle", ["subtract", "intersect", "union", "none"]);
 
         gui.add(controls, "showResult");
         gui.add(controls, "rotateResult");
         gui.add(controls, "hideWireframes").onChange(function () {
             if (controls.hideWireframes) {
-                shape.material.visible = false;
-                squareBack.material.visible = false;
-                shaft.material.visible = false;
+                // shape.material.visible = false;
+                dammyBase.material.visible = false;
+                shaftRectangle.material.visible = false;
+                shaftCylinder.material.visible = false;
             } else {
-                shape.material.visible = true;
-                squareBack.material.visible = true;
-                shaft.material.visible = true;
+                // shape.material.visible = true;
+                dammyBase.material.visible = true;
+                shaftRectangle.material.visible = true;
+                shaftCylinder.material.visible = true;
             }
           });
         //extrude関連gui
-        guishape.add(controls, 'amount', 0, 40).onChange(controls.asGeom);
-            gui.add(controls, 'bevelThickness', 0, 10).onChange(controls.asGeom);
-            //gui.add(controls, 'bevelSize', 0, 10).onChange(controls.asGeom);
-            //gui.add(controls, 'bevelSegments', 0, 30).step(1).onChange(controls.asGeom);
-            //gui.add(controls, 'bevelEnabled').onChange(controls.asGeom);
-            //gui.add(controls, 'curveSegments', 1, 30).step(1).onChange(controls.asGeom);
-        guishape.add(controls, 'steps', 1, 5).step(1).onChange(controls.asGeom);
-
-        controls.asGeom();
+        // guishape.add(controls, 'amount', 0, 40).onChange(controls.asGeom);
+        //     gui.add(controls, 'bevelThickness', 0, 10).onChange(controls.asGeom);
+        //     //gui.add(controls, 'bevelSize', 0, 10).onChange(controls.asGeom);
+        //     //gui.add(controls, 'bevelSegments', 0, 30).step(1).onChange(controls.asGeom);
+        //     //gui.add(controls, 'bevelEnabled').onChange(controls.asGeom);
+        //     //gui.add(controls, 'curveSegments', 1, 30).step(1).onChange(controls.asGeom);
+        // guishape.add(controls, 'steps', 1, 5).step(1).onChange(controls.asGeom);
+        //
+        // controls.asGeom();
 
 
 
@@ -267,30 +370,46 @@ var exporter = new THREE.STLExporter();
             // to set timeout > 1, if not executed immediately.
             setTimeout(function () {
                 scene.remove(result);
-                var shapeBSP = new ThreeBSP(shape);
-                var shaft2BSP = new ThreeBSP(shaft);
+                // var shapeBSP = new ThreeBSP(shape);
+                var dammyBaseBSP = new ThreeBSP(dammyBase);
+                var shaftCylinderBSP = new ThreeBSP(shaftCylinder);
+                var shaftRectangleBSP = new ThreeBSP(shaftRectangle);
 
                 var resultBSP;
 
 
 
                 // next do the shaft
-                if (!resultBSP) resultBSP = shapeBSP;
-                switch (controls.actionshaft) {
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actionshaftCylinder) {
                     case "subtract":
-                        resultBSP = resultBSP.subtract(shaft2BSP);
+                        resultBSP = dammyBaseBSP.subtract(shaftCylinderBSP);
                         break;
                     case "intersect":
-                        resultBSP = resultBSP.intersect(shaft2BSP);
+                        resultBSP = dammyBaseBSP.intersect(shaftCylinderBSP);
                         break;
                     case "union":
-                        resultBSP = resultBSP.union(shaft2BSP);
+                        resultBSP = dammyBaseBSP.union(shaftCylinderBSP);
+                        break;
+                    case "none": // noop;
+                }
+                // next do the shaft
+                if (!resultBSP) resultBSP = dammyBaseBSP;
+                switch (controls.actionshaftRectangle) {
+                    case "subtract":
+                        resultBSP = resultBSP.subtract(shaftRectangleBSP);
+                        break;
+                    case "intersect":
+                        resultBSP = resultBSP.intersect(shaftRectangleBSP);
+                        break;
+                    case "union":
+                        resultBSP = resultBSP.union(shaftRectangleBSP);
                         break;
                     case "none": // noop;
                 }
 
 
-                if (controls.actionshaft === "none" && controls.actionshape === "none") {
+                if (controls.actionshaftCylinder === "none" &&controls.actionshaftRectangle === "none") {
                     // do nothing
                 } else {
                     result = resultBSP.toMesh();
@@ -384,12 +503,12 @@ var exporter = new THREE.STLExporter();
 
     };
 
-    function drawShape() {
+    // function drawShape() {
 
-        // create a basic shape
-        var shape = new THREE.Shape();
-
-        shape.absarc(0,0,11,11,0, Math.PI * 2,true);
+        // // create a basic shape
+        // var shape = new THREE.Shape();
+        //
+        // shape.absarc(0,0,11,11,0, Math.PI * 2,true);
         /*
         // startpoint
         shape.moveTo(0, 0);
@@ -420,8 +539,8 @@ var exporter = new THREE.STLExporter();
         shape.holes.push(squareBack);
 */
         // return the shape
-        return shape;
-    }
+    //     return shape;
+    // }
 
     function createMesh(geom) {
 

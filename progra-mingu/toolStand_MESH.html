@@ -274,7 +274,7 @@
             this.sonyMesh3PosY = sonyMesh3.position.y;
             this.sonyMesh3PosZ = sonyMesh3.position.z;
 
-            this.actionbase = "union";
+            // this.actionbase = "union";/
             this.actionrectangle1 = "subtract"; // add, substract, intersect
             this.actionrectangle2 = "subtract"; // add, substract, intersect
             this.actionrectangle3 = "subtract"; // add, substract, intersect
@@ -479,6 +479,7 @@
         guirectangle3.add(controls, "scaleZ", 0, 10).onChange(function (e) {
             rectangle3.scale.z = e
         });
+
         guirectangle3.add(controls, "actionrectangle3", ["subtract", "intersect", "union", "none"]);
 
         var guisonyMesh1 = gui.addFolder("MESH1");
@@ -565,17 +566,16 @@
                 scene.remove(result);
                 var dammyBaseBSP = new ThreeBSP(dammyBase);
                 var baseBSP = new ThreeBSP(base);
-                var cylinder12BSP = new ThreeBSP(cylinder1);
-                var cylinder22BSP = new ThreeBSP(cylinder2);
-                var cylinder32BSP = new ThreeBSP(cylinder3);
+                var cylinder1BSP = new ThreeBSP(cylinder1);
+                var cylinder2BSP = new ThreeBSP(cylinder2);
+                var cylinder3BSP = new ThreeBSP(cylinder3);
                 var rectangle1BSP = new ThreeBSP(rectangle1);
-                var rectangle22BSP = new ThreeBSP(rectangle2);
-                var rectangle32BSP = new ThreeBSP(rectangle3);
+                var rectangle2BSP = new ThreeBSP(rectangle2);
+                var rectangle3BSP = new ThreeBSP(rectangle3);
                 var sonyMesh1BSP = new ThreeBSP(sonyMesh1);
-                var sonyMesh22BSP = new ThreeBSP(sonyMesh2);
-                var sonyMesh32BSP = new ThreeBSP(sonyMesh3);
+                var sonyMesh2BSP = new ThreeBSP(sonyMesh2);
+                var sonyMesh3BSP = new ThreeBSP(sonyMesh3);
                 var resultBSP;
-
 
                 // next do the base
                 if (!resultBSP) resultBSP = dammyBaseBSP;
@@ -592,18 +592,17 @@
                     case "none": // noop;
                 }
 
-
                 // next do the cylinder1
                 if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actioncylinder1) {
                     case "subtract":
-                        resultBSP = resultBSP.subtract(cylinder12BSP);
+                        resultBSP = resultBSP.subtract(cylinder1BSP);
                         break;
                     case "intersect":
-                        resultBSP = resultBSP.intersect(cylinder12BSP);
+                        resultBSP = resultBSP.intersect(cylinder1BSP);
                         break;
                     case "union":
-                        resultBSP = resultBSP.union(cylinder12BSP);
+                        resultBSP = resultBSP.union(cylinder1BSP);
                         break;
                     case "none": // noop;
                 }
@@ -612,13 +611,13 @@
                 if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actioncylinder2) {
                     case "subtract":
-                        resultBSP = resultBSP.subtract(cylinder22BSP);
+                        resultBSP = resultBSP.subtract(cylinder2BSP);
                         break;
                     case "intersect":
-                        resultBSP = resultBSP.intersect(cylinder22BSP);
+                        resultBSP = resultBSP.intersect(cylinder2BSP);
                         break;
                     case "union":
-                        resultBSP = resultBSP.union(cylinder22BSP);
+                        resultBSP = resultBSP.union(cylinder2BSP);
                         break;
                     case "none": // noop;
                 }
@@ -627,13 +626,13 @@
                 if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actioncylinder3) {
                     case "subtract":
-                        resultBSP = resultBSP.subtract(cylinder32BSP);
+                        resultBSP = resultBSP.subtract(cylinder3BSP);
                         break;
                     case "intersect":
-                        resultBSP = resultBSP.intersect(cylinder32BSP);
+                        resultBSP = resultBSP.intersect(cylinder3BSP);
                         break;
                     case "union":
-                        resultBSP = resultBSP.union(cylinder32BSP);
+                        resultBSP = resultBSP.union(cylinder3BSP);
                         break;
                     case "none": // noop;
                 }
@@ -657,13 +656,13 @@
                 if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actionrectangle2) {
                     case "subtract":
-                        resultBSP = resultBSP.subtract(rectangle22BSP);
+                        resultBSP = resultBSP.subtract(rectangle2BSP);
                         break;
                     case "intersect":
-                        resultBSP = resultBSP.intersect(rectangle22BSP);
+                        resultBSP = resultBSP.intersect(rectangle2BSP);
                         break;
                     case "union":
-                        resultBSP = resultBSP.union(rectangle22BSP);
+                        resultBSP = resultBSP.union(rectangle2BSP);
                         break;
                     case "none": // noop;
                 }
@@ -672,13 +671,13 @@
                 if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actionrectangle3) {
                     case "subtract":
-                        resultBSP = resultBSP.subtract(rectangle32BSP);
+                        resultBSP = resultBSP.subtract(rectangle3BSP);
                         break;
                     case "intersect":
-                        resultBSP = resultBSP.intersect(rectangle32BSP);
+                        resultBSP = resultBSP.intersect(rectangle3BSP);
                         break;
                     case "union":
-                        resultBSP = resultBSP.union(rectangle32BSP);
+                        resultBSP = resultBSP.union(rectangle3BSP);
                         break;
                     case "none": // noop;
                 }
@@ -687,13 +686,13 @@
                 if (!resultBSP) resultBSP = dammyBaseBSP;
                 switch (controls.actionsonyMesh1) {
                     case "subtract":
-                        resultBSP = resultBSP.subtract(sonyMesh12BSP);
+                        resultBSP = resultBSP.subtract(sonyMesh1BSP);
                         break;
                     case "intersect":
-                        resultBSP = resultBSP.intersect(sonyMesh12BSP);
+                        resultBSP = resultBSP.intersect(sonyMesh1BSP);
                         break;
                     case "union":
-                        resultBSP = resultBSP.union(sonyMesh12BSP);
+                        resultBSP = resultBSP.union(sonyMesh1BSP);
                         break;
                     case "none": // noop;
                 }
@@ -702,13 +701,13 @@
               if (!resultBSP) resultBSP = dammyBaseBSP;
               switch (controls.actionsonyMesh2) {
                    case "subtract":
-                       resultBSP = resultBSP.subtract(sonyMesh22BSP);
+                       resultBSP = resultBSP.subtract(sonyMesh2BSP);
                        break;
                    case "intersect":
-                       resultBSP = resultBSP.intersect(sonyMesh22BSP);
+                       resultBSP = resultBSP.intersect(sonyMesh2BSP);
                        break;
                    case "union":
-                       resultBSP = resultBSP.union(sonyMesh22BSP);
+                       resultBSP = resultBSP.union(sonyMesh2BSP);
                        break;
                    case "none": // noop;
                }
@@ -716,13 +715,13 @@
               if (!resultBSP) resultBSP = dammyBaseBSP;
               switch (controls.actionsonyMesh3) {
                    case "subtract":
-                       resultBSP = resultBSP.subtract(sonyMesh32BSP);
+                       resultBSP = resultBSP.subtract(sonyMesh3BSP);
                        break;
                    case "intersect":
-                       resultBSP = resultBSP.intersect(sonyMesh32BSP);
+                       resultBSP = resultBSP.intersect(sonyMesh3BSP);
                        break;
                    case "union":
-                       resultBSP = resultBSP.union(sonyMesh32BSP);
+                       resultBSP = resultBSP.union(sonyMesh3BSP);
                        break;
                    case "none": // noop;
                }
