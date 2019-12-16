@@ -103,23 +103,23 @@ var exporter = new THREE.STLExporter();
         webGLRenderer.shadowMap.enabled = true;
 
         //プログラム上でベースとなる図形
-        var dammyBase = createMesh(new THREE.BoxGeometry(0.1, 0.1, 0.1));
-        dammyBase.position.x = 0;
+        var dammyRotation = createMesh(new THREE.BoxGeometry(0.1, 0.1, 0.1));
+        dammyRotation.position.x = 0;
 
-        var shaftRectangle = createMesh(new THREE.BoxGeometry(7.8, 7.88, 34));
-        shaftRectangle.position.set(0, 0, 0);
+        var rotationRectangle = createMesh(new THREE.BoxGeometry(7.8, 7.88, 34));
+        rotationRectangle.position.set(0, 0, 0);
 
-        var shaftCylinder = createMesh(new THREE.CylinderGeometry(20, 20, 20, 36));
-        // shaftCylinder.radialSegments= 12;
-        shaftCylinder.position.set(0, 0, 0);
-        shaftCylinder.rotation.x = 0.5 * Math.PI;
+        var rotationCylinder = createMesh(new THREE.CylinderGeometry(20, 20, 20, 36));
+        // rotationCylinder.radialSegments= 12;
+        rotationCylinder.position.set(0, 0, 0);
+        rotationCylinder.rotation.x = 0.5 * Math.PI;
 
 
         // add the sphere to the scene
         // scene.add(shape);
-        scene.add(dammyBase);
-        scene.add(shaftRectangle);
-        scene.add(shaftCylinder);
+        scene.add(dammyRotation);
+        scene.add(rotationRectangle);
+        scene.add(rotationCylinder);
 
         // position and point the camera to the center of the scene
         camera.position.x = 0;
@@ -138,16 +138,16 @@ var exporter = new THREE.STLExporter();
         // setup the control gui
         var controls = new function () {
 
-            this.shaftRectanglePosX = shaftRectangle.position.x;
-            this.shaftRectanglePosY = shaftRectangle.position.y;
-            this.shaftRectanglePosZ = shaftRectangle.position.z;
+            this.rotationRectanglePosX = rotationRectangle.position.x;
+            this.rotationRectanglePosY = rotationRectangle.position.y;
+            this.rotationRectanglePosZ = rotationRectangle.position.z;
             this.scaleX = 1;
             this.scaleY = 1;
             this.scaleZ = 1;
 
-            this.shaftCylinderPosX = shaftCylinder.position.x;
-            this.shaftCylinderPosY = shaftCylinder.position.y;
-            this.shaftCylinderPosZ = shaftCylinder.position.z;
+            this.rotationCylinderPosX = rotationCylinder.position.x;
+            this.rotationCylinderPosY = rotationCylinder.position.y;
+            this.rotationCylinderPosZ = rotationCylinder.position.z;
             this.scaleX = 1;
             this.scaleY = 1;
             this.scaleZ = 1;
@@ -163,28 +163,28 @@ var exporter = new THREE.STLExporter();
             this.thetaLength = 2 * Math.PI;
 
             //rectangleに関する項目
-            this.shaftRectangleWidth = 7.8;
-            this.shaftRectangleHeight = 7.8;
-            this.shaftRectangleDepth = 37;
+            this.rotationRectangleWidth = 7.8;
+            this.rotationRectangleHeight = 7.8;
+            this.rotationRectangleDepth = 37;
 
             //パラメーター変更を反映
             this.redraw = function () {
                 // remove the old plane
-                scene.remove(shaftCylinder);
-                scene.remove(shaftRectangle);
+                scene.remove(rotationCylinder);
+                scene.remove(rotationRectangle);
                 // create a new one
 
-                shaftCylinder = createMesh(new THREE.CylinderGeometry(controls.radius, controls.radius, controls.height, controls.radialSegments, controls.heightSegments, controls.openEnded, controls.thetaStart, controls.thetaLength));
-                shaftCylinder.rotation.x = 0.5 * Math.PI;
-                shaftRectangle = createMesh(new THREE.BoxGeometry(controls.shaftRectangleWidth, controls.shaftRectangleHeight, controls.height+14 ));
+                rotationCylinder = createMesh(new THREE.CylinderGeometry(controls.radius, controls.radius, controls.height, controls.radialSegments, controls.heightSegments, controls.openEnded, controls.thetaStart, controls.thetaLength));
+                rotationCylinder.rotation.x = 0.5 * Math.PI;
+                rotationRectangle = createMesh(new THREE.BoxGeometry(controls.rotationRectangleWidth, controls.rotationRectangleHeight, controls.height+14 ));
                 // add it to the scene.
-                scene.add(shaftCylinder);
-                scene.add(shaftRectangle);
+                scene.add(rotationCylinder);
+                scene.add(rotationRectangle);
             };
 
 
-            this.actionshaftRectangle = "union"; // add, substract, intersect
-            this.actionshaftCylinder = "union"; // add, substract, intersect
+            this.actionrotationRectangle = "union"; // add, substract, intersect
+            this.actionrotationCylinder = "union"; // add, substract, intersect
 
             this.showResult = function () {
                 redrawResult();
@@ -207,7 +207,7 @@ var exporter = new THREE.STLExporter();
         var gui = new dat.GUI();
 
 
-        var guishaftCylinder = gui.addFolder("shaftCylinder");
+        var guirotationCylinder = gui.addFolder("rotationCylinder");
         gui.add(controls, 'radius', 0, 80).onChange(controls.redraw);
         // gui.add(controls, 'radiusBottom', 0, 80).onChange(controls.redraw);
         gui.add(controls, 'height', 0, 40).onChange(controls.redraw);
@@ -217,7 +217,7 @@ var exporter = new THREE.STLExporter();
         // gui.add(controls, 'thetaStart', 0, 2 * Math.PI).onChange(controls.redraw);
         // gui.add(controls, 'thetaLength', 0, 2 * Math.PI).onChange(controls.redraw);
 
-        guishaftCylinder.add(controls, "actionshaftCylinder", ["subtract", "intersect", "union", "none"]);
+        guirotationCylinder.add(controls, "actionrotationCylinder", ["subtract", "intersect", "union", "none"]);
 
 
         gui.add(controls, "showResult");
@@ -225,14 +225,14 @@ var exporter = new THREE.STLExporter();
         gui.add(controls, "hideWireframes").onChange(function () {
             if (controls.hideWireframes) {
                 // shape.material.visible = false;
-                dammyBase.material.visible = false;
-                shaftRectangle.material.visible = false;
-                shaftCylinder.material.visible = false;
+                dammyRotation.material.visible = false;
+                rotationRectangle.material.visible = false;
+                rotationCylinder.material.visible = false;
             } else {
                 // shape.material.visible = true;
-                dammyBase.material.visible = true;
-                shaftRectangle.material.visible = true;
-                shaftCylinder.material.visible = true;
+                dammyRotation.material.visible = true;
+                rotationRectangle.material.visible = true;
+                rotationCylinder.material.visible = true;
             }
           });
 
@@ -249,43 +249,43 @@ var exporter = new THREE.STLExporter();
             setTimeout(function () {
                 scene.remove(result);
                 // var shapeBSP = new ThreeBSP(shape);
-                var dammyBaseBSP = new ThreeBSP(dammyBase);
-                var shaftCylinderBSP = new ThreeBSP(shaftCylinder);
-                var shaftRectangleBSP = new ThreeBSP(shaftRectangle);
+                var dammyRotationBSP = new ThreeBSP(dammyRotation);
+                var rotationCylinderBSP = new ThreeBSP(rotationCylinder);
+                var rotationRectangleBSP = new ThreeBSP(rotationRectangle);
 
                 var resultBSP;
 
                 // next do the shaft
-                if (!resultBSP) resultBSP = dammyBaseBSP;
-                switch (controls.actionshaftCylinder) {
+                if (!resultBSP) resultBSP = dammyRotationBSP;
+                switch (controls.actionrotationCylinder) {
                     case "subtract":
-                        resultBSP = dammyBaseBSP.subtract(shaftCylinderBSP);
+                        resultBSP = dammyRotationBSP.subtract(rotationCylinderBSP);
                         break;
                     case "intersect":
-                        resultBSP = dammyBaseBSP.intersect(shaftCylinderBSP);
+                        resultBSP = dammyRotationBSP.intersect(rotationCylinderBSP);
                         break;
                     case "union":
-                        resultBSP = dammyBaseBSP.union(shaftCylinderBSP);
+                        resultBSP = dammyRotationBSP.union(rotationCylinderBSP);
                         break;
                     case "none": // noop;
                 }
                 // next do the shaft
-                if (!resultBSP) resultBSP = dammyBaseBSP;
-                switch (controls.actionshaftRectangle) {
+                if (!resultBSP) resultBSP = dammyRotationBSP;
+                switch (controls.actionrotationRectangle) {
                     case "subtract":
-                        resultBSP = resultBSP.subtract(shaftRectangleBSP);
+                        resultBSP = resultBSP.subtract(rotationRectangleBSP);
                         break;
                     case "intersect":
-                        resultBSP = resultBSP.intersect(shaftRectangleBSP);
+                        resultBSP = resultBSP.intersect(rotationRectangleBSP);
                         break;
                     case "union":
-                        resultBSP = resultBSP.union(shaftRectangleBSP);
+                        resultBSP = resultBSP.union(rotationRectangleBSP);
                         break;
                     case "none": // noop;
                 }
 
 
-                if (controls.actionshaftCylinder === "none" &&controls.actionshaftRectangle === "none") {
+                if (controls.actionrotationCylinder === "none" &&controls.actionrotationRectangle === "none") {
                     // do nothing
                 } else {
                     result = resultBSP.toMesh();
@@ -378,6 +378,7 @@ var exporter = new THREE.STLExporter();
         }
 
     };
+
 
 
     function createMesh(geom) {

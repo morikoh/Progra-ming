@@ -3,7 +3,7 @@
 <html>
 
 <head>
-    <title>Tape Cutter Generator</title>
+    <title>Tape Cutter Base Generator</title>
     <script type="text/javascript" src="../three.js/libs/three.js"></script>
 
     <script type="text/javascript" src="../three.js/libs/stats.js"></script>
@@ -37,10 +37,8 @@
 <body>
 
   <div id="info">
-    <a>Tapa Cutter Generator</a> <br/><br/>
-    <button onclick="exportASCII()">export ASCII</button>
-    <!-- <button onclick="exportBinary()">export binary</button> -->
-    <button onclick="exportlibRotationASCII()">export lib_rotate</button>
+    <a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> Tapa Cutter Base Generator<br/><br/>
+    <button onclick="exportASCII()">export ASCII</button> <button onclick="exportBinary()">export binary</button>
   </div>
 
 <div id="Stats-output">
@@ -54,7 +52,6 @@
 <script type="text/javascript">
 
 var result;
-var result2;
 
 //stlexporter
 var exporter = new THREE.STLExporter();
@@ -100,52 +97,36 @@ var exporter = new THREE.STLExporter();
         //シーンオブジェクトに追加
         scene.add(grid);
 
+
+
+
         // create a render and set the size
         var webGLRenderer = new THREE.WebGLRenderer();
         webGLRenderer.setClearColor(new THREE.Color(0x999999));
         webGLRenderer.setSize(window.innerWidth, window.innerHeight);
         webGLRenderer.shadowMap.enabled = true;
 
-        //tapecutterのボディ
         //プログラム上でベースとなる図形
         var dammyBase = createMesh(new THREE.BoxGeometry(0.1, 0.1, 0.1));
         dammyBase.position.x = 0;
 
         var shape = createMesh(new THREE.ShapeGeometry(drawShape()));
         shape.position.x = -2;
-        //lib_rotateを取り付けるための穴をあけるための図形
+
         var squareBack = createMesh(new THREE.BoxGeometry(8, 8, 30));
         squareBack.position.set(10, 30, 0);
-        //lib_cutを取り付けるための穴をあけるための図形
+
         var squareFront = createMesh(new THREE.BoxGeometry(8, 8, 30));
         squareFront.position.set(72, 25, 0);
-
-        //lib_rotateの図形
-        //プログラム上でベースとなる図形
-        var dammyRotation = createMesh(new THREE.BoxGeometry(0.1, 0.1, 0.1));
-        dammyRotation.position.set(-40, 25, 0);
-
-        var rotationRectangle = createMesh(new THREE.BoxGeometry(7.8, 7.88, 34));
-        rotationRectangle.position.set(-40, 25, 0);
-
-        var rotationCylinder = createMesh(new THREE.CylinderGeometry(20, 20, 20, 36));
-        // rotationCylinder.radialSegments= 12;
-        rotationCylinder.position.set(-40, 25, 0);
-        rotationCylinder.rotation.x = 0.5 * Math.PI;
 
         //var result;
 
 
         // add the sphere to the scene
-        //tapecutterのボディをシーンに追加
         scene.add(dammyBase);
         scene.add(shape);
         scene.add(squareBack);
         scene.add(squareFront);
-        //lib_rotateをシーンに追加
-        scene.add(dammyRotation);
-        scene.add(rotationRectangle);
-        scene.add(rotationCylinder);
 
         // position and point the camera to the center of the scene
         camera.position.x = 0;
@@ -164,7 +145,6 @@ var exporter = new THREE.STLExporter();
         // setup the control gui
         var controls = new function () {
 
-            //tapacutterBoby
             this.shapePosX = shape.position.x;
             this.shapePosY = shape.position.y;
             this.shapePosZ = shape.position.z;
@@ -227,56 +207,6 @@ var exporter = new THREE.STLExporter();
 
             };
 
-            //lib_rotate
-            this.rotationRectanglePosX = rotationRectangle.position.x;
-            this.rotationRectanglePosY = rotationRectangle.position.y;
-            this.rotationRectanglePosZ = rotationRectangle.position.z;
-            this.scaleX = 1;
-            this.scaleY = 1;
-            this.scaleZ = 1;
-
-            this.rotationCylinderPosX = rotationCylinder.position.x;
-            this.rotationCylinderPosY = rotationCylinder.position.y;
-            this.rotationCylinderPosZ = rotationCylinder.position.z;
-            this.scaleX = 1;
-            this.scaleY = 1;
-            this.scaleZ = 1;
-
-            //cylinderに関する項目
-            this.radius = 20;
-            // this.radiusBottom = 20;
-            this.height = 20;
-            this.radialSegments = 36;
-            this.heightSegments = 8;
-            this.openEnded = false;
-            this.thetaStart = 0;
-            this.thetaLength = 2 * Math.PI;
-
-            //rectangleに関する項目
-            this.rotationRectangleWidth = 7.8;
-            this.rotationRectangleHeight = 7.8;
-            this.rotationRectangleDepth = 37;
-
-            //パラメーター変更を反映
-            this.redraw = function () {
-                // remove the old plane
-                scene.remove(rotationCylinder);
-                scene.remove(rotationRectangle);
-                // create a new one
-
-                rotationCylinder = createMesh(new THREE.CylinderGeometry(controls.radius, controls.radius, controls.height, controls.radialSegments, controls.heightSegments, controls.openEnded, controls.thetaStart, controls.thetaLength));
-                rotationCylinder.position.set(-40, 25, 0);
-                rotationCylinder.rotation.x = 0.5 * Math.PI;
-                rotationRectangle = createMesh(new THREE.BoxGeometry(controls.rotationRectangleWidth, controls.rotationRectangleHeight, controls.height+14 ));
-                rotationRectangle.position.set(-40, 25, 0);
-
-                // add it to the scene.
-                scene.add(rotationCylinder);
-                scene.add(rotationRectangle);
-            };
-
-            this.actionrotationRectangle = "union"; // add, substract, intersect
-            this.actionrotationCylinder = "union"; // add, substract, intersect
 
         };
 
@@ -341,12 +271,6 @@ var exporter = new THREE.STLExporter();
         });
         guisquareFront.add(controls, "actionsquareFront", ["subtract", "intersect", "union", "none"]);
 
-        //lib_rotateのパラメータ
-        var guirotationCylinder = gui.addFolder("rotationCylinder");
-        gui.add(controls, 'radius', 0, 40).onChange(controls.redraw);
-        gui.add(controls, 'height', 0, 40).onChange(controls.redraw);
-        // guirotationCylinder.add(controls, "actionrotationCylinder", ["subtract", "intersect", "union", "none"]);
-
         gui.add(controls, "showResult");
         gui.add(controls, "rotateResult");
         gui.add(controls, "hideWireframes").onChange(function () {
@@ -364,9 +288,16 @@ var exporter = new THREE.STLExporter();
           });
         //extrude関連gui
         guishape.add(controls, 'amount', 0, 10).onChange(controls.asGeom);
+            //gui.add(controls, 'bevelThickness', 0, 10).onChange(controls.asGeom);
+            //gui.add(controls, 'bevelSize', 0, 10).onChange(controls.asGeom);
+            //gui.add(controls, 'bevelSegments', 0, 30).step(1).onChange(controls.asGeom);
+            //gui.add(controls, 'bevelEnabled').onChange(controls.asGeom);
+            //gui.add(controls, 'curveSegments', 1, 30).step(1).onChange(controls.asGeom);
         guishape.add(controls, 'steps', 1, 5).step(1).onChange(controls.asGeom);
 
         controls.asGeom();
+
+
 
         render();
 
@@ -379,19 +310,13 @@ var exporter = new THREE.STLExporter();
             // make the call async to avoid blocking the thread. Need
             // to set timeout > 1, if not executed immediately.
             setTimeout(function () {
-                //tapecutterBody
                 scene.remove(result);
                 var dammyBaseBSP = new ThreeBSP(dammyBase);
                 var shapeBSP = new ThreeBSP(shape);
                 var squareBackBSP = new ThreeBSP(squareBack);
                 var squareFront2BSP = new ThreeBSP(squareFront);
+
                 var resultBSP;
-                //lib_rotate
-                scene.remove(result2);
-                var dammyRotationBSP = new ThreeBSP(dammyRotation);
-                var rotationCylinderBSP = new ThreeBSP(rotationCylinder);
-                var rotationRectangleBSP = new ThreeBSP(rotationRectangle);
-                var result2BSP;
 
 
                 // first do the sphere
@@ -439,6 +364,7 @@ var exporter = new THREE.STLExporter();
                     case "none": // noop;
                 }
 
+
                 if (controls.actionsquareFront === "none" && controls.actionsquareBack === "none") {
                     // do nothing
                 } else {
@@ -446,44 +372,6 @@ var exporter = new THREE.STLExporter();
                     result.geometry.computeFaceNormals();
                     result.geometry.computeVertexNormals();
                     scene.add(result);
-                }
-
-                // next do the shaft
-                if (!result2BSP) result2BSP = dammyRotationBSP;
-                switch (controls.actionrotationCylinder) {
-                    case "subtract":
-                        result2BSP = dammyRotationBSP.subtract(rotationCylinderBSP);
-                        break;
-                    case "intersect":
-                        result2BSP = dammyRotationBSP.intersect(rotationCylinderBSP);
-                        break;
-                    case "union":
-                        result2BSP = dammyRotationBSP.union(rotationCylinderBSP);
-                        break;
-                    case "none": // noop;
-                }
-                // next do the shaft
-                if (!result2BSP) result2BSP = dammyRotationBSP;
-                switch (controls.actionrotationRectangle) {
-                    case "subtract":
-                        result2BSP = result2BSP.subtract(rotationRectangleBSP);
-                        break;
-                    case "intersect":
-                        result2BSP = result2BSP.intersect(rotationRectangleBSP);
-                        break;
-                    case "union":
-                        result2BSP = result2BSP.union(rotationRectangleBSP);
-                        break;
-                    case "none": // noop;
-                }
-                if (controls.actionrotationCylinder === "none" &&controls.actionrotationRectangle === "none") {
-                    // do nothing
-                } else {
-                    result2 = result2BSP.toMesh();
-                    result2.geometry.computeFaceNormals();
-                    result2.geometry.computeVertexNormals();
-
-                    scene.add(result2);
                 }
 
                 hideSpinner(spinner);
@@ -570,7 +458,6 @@ var exporter = new THREE.STLExporter();
 
     };
 
-    //TapecutterBaseの押出形状を描画
     function drawShape() {
 
         // create a basic shape
@@ -578,13 +465,19 @@ var exporter = new THREE.STLExporter();
 
         // startpoint
         shape.moveTo(0, 0);
+
         // straight line upwards
         shape.lineTo(0, 40);
+
         // straight line upwards
         shape.lineTo(30, 40);
+
         shape.lineTo(30, 40);
+
         shape.lineTo(80, 30);
+
         shape.lineTo(80, 0);
+
         shape.lineTo(0, 0);
 
         var squareBack = new THREE.Path();
@@ -644,26 +537,17 @@ var exporter = new THREE.STLExporter();
     //stlダウンロードASCII
     function exportASCII() {
 
-      var resultTapecutterbase = exporter.parse( result );
-      saveString( resultTapecutterbase, 'tapecutterbase.stl' );
+      var result1 = exporter.parse( result );
+      saveString( result1, 'tapecutterbase.stl' );
 
     }
     //stlダウンロードBinary
     function exportBinary() {
 
-      var resultTapecutterbase = exporter.parse( meshTapecutterbase, { binary: true } );
-      saveArrayBuffer( resultTapecutterbase, 'tapecutterbase.stl' );
+      var result1 = exporter.parse( mesh, { binary: true } );
+      saveArrayBuffer( result1, 'tapecutterbase.stl' );
 
     }
-
-    //stlダウンロードASCII
-    function exportlibRotationASCII() {
-
-      var resultRotation = exporter.parse( result2 );
-      saveString( resultRotation, 'lib_rotation.stl' );
-
-    }
-
     var link = document.createElement( 'a' );
     link.style.display = 'none';
     document.body.appendChild( link );
