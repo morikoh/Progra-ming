@@ -103,17 +103,17 @@ var exporter = new THREE.STLExporter();
         webGLRenderer.setSize(window.innerWidth, window.innerHeight);
         webGLRenderer.shadowMap.enabled = true;
 
-        var shape = createMesh(new THREE.ShapeGeometry(drawShape()));
-        shape.position.x = -2;
+        var shapeCut = createMesh(new THREE.ShapeGeometry(drawShape()));
+        shapeCut.position.x = -2;
 
-        var shaft = createMesh(new THREE.BoxGeometry(7.8, 7.8, 30));
-        shaft.position.set(0, 0, 0);
+        var shaftCut = createMesh(new THREE.BoxGeometry(7.8, 7.8, 30));
+        shaftCut.position.set(0, 0, 0);
 
         //var result;
 
         // add the sphere to the scene
-        scene.add(shape);
-        scene.add(shaft);
+        scene.add(shapeCut);
+        scene.add(shaftCut);
 
         // position and point the camera to the center of the scene
         camera.position.x = 0;
@@ -121,30 +121,28 @@ var exporter = new THREE.STLExporter();
         camera.position.z = 100;
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-
         // add the output of the renderer to the html element
         document.getElementById("WebGL-output").appendChild(webGLRenderer.domElement);
 
         // call the render function
         var step = 0;
 
-
         // setup the control gui
         var controls = new function () {
 
-            this.shapePosX = shape.position.x;
-            this.shapePosY = shape.position.y;
-            this.shapePosZ = shape.position.z;
-            this.shapeScale = 1;
+            this.shapeCutPosX = shapeCut.position.x;
+            this.shapeCutPosY = shapeCut.position.y;
+            this.shapeCutPosZ = shapeCut.position.z;
+            this.shapeCutScale = 1;
 
-            this.shaftPosX = shaft.position.x;
-            this.shaftPosY = shaft.position.y;
-            this.shaftPosZ = shaft.position.z;
+            this.shaftCutPosX = shaftCut.position.x;
+            this.shaftCutPosY = shaftCut.position.y;
+            this.shaftCutPosZ = shaftCut.position.z;
             this.scaleX = 1;
             this.scaleY = 1;
             this.scaleZ = 1;
 
-            this.actionshaft = "union"; // add, substract, intersect
+            this.actionshaftCut = "union"; // add, substract, intersect
             this.actionSphere = "union";
 
             this.showResult = function () {
@@ -154,7 +152,7 @@ var exporter = new THREE.STLExporter();
             this.hideWireframes = false;
             this.rotateResult = false;
 
-            this.amount = 1;
+            this.amount2 = 1;
             this.bevelThickness = 5;
             this.bevelSize = 0;
             this.bevelEnabled = true;
@@ -165,12 +163,12 @@ var exporter = new THREE.STLExporter();
 
             this.asGeom = function () {
                 // remove the old plane
-                scene.remove(shape);
-                scene.remove(shaft);
+                scene.remove(shapeCut);
+                scene.remove(shaftCut);
                 // create a new one
 
                 var options = {
-                    amount: controls.amount,
+                    amount: controls.amount2,
                     bevelThickness: controls.bevelThickness,
                     bevelSize: controls.bevelSize,
 
@@ -180,61 +178,61 @@ var exporter = new THREE.STLExporter();
                     steps: controls.steps
                 };
 
-                shape = createMesh(new THREE.ExtrudeGeometry(drawShape(), options));
-                shape.position.z = -controls.amount/2;
-                shaft = createMesh(new THREE.BoxGeometry(7.8, 7.8, controls.amount+14));
+                shapeCut = createMesh(new THREE.ExtrudeGeometry(drawShape(), options));
+                shapeCut.position.z = -controls.amount2/2;
+                shaftCut = createMesh(new THREE.BoxGeometry(7.8, 7.8, controls.amount2+14));
 
                 // add it to the scene.
-                scene.add(shape);
-                scene.add(shaft);
+                scene.add(shapeCut);
+                scene.add(shaftCut);
             };
 
         };
 
         var gui = new dat.GUI();
 
-        var guishape = gui.addFolder("shape");
-        guishape.add(controls, "shapePosX", -15, 15).onChange(function () {
-            shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
+        var guishapeCut = gui.addFolder("shapeCut");
+        guishapeCut.add(controls, "shapeCutPosX", -15, 15).onChange(function () {
+            shapeCut.position.set(controls.shapeCutPosX, controls.shapeCutPosY, controls.shapeCutPosZ)
         });
-        guishape.add(controls, "shapePosY", -15, 15).onChange(function () {
-            shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
+        guishapeCut.add(controls, "shapeCutPosY", -15, 15).onChange(function () {
+            shapeCut.position.set(controls.shapeCutPosX, controls.shapeCutPosY, controls.shapeCutPosZ)
         });
-        guishape.add(controls, "shapePosZ", -15, 15).onChange(function () {
-            shape.position.set(controls.shapePosX, controls.shapePosY, controls.shapePosZ)
+        guishapeCut.add(controls, "shapeCutPosZ", -15, 15).onChange(function () {
+            shapeCut.position.set(controls.shapeCutPosX, controls.shapeCutPosY, controls.shapeCutPosZ)
         });
-        guishape.add(controls, 'amount', 0, 40).onChange(controls.asGeom);
+        guishapeCut.add(controls, 'amount2', 0, 40).onChange(controls.asGeom);
 
-        // var guishaft = gui.addFolder("shaft");
-        // guishaft.add(controls, "shaftPosX", -15, 15).onChange(function () {
-        //     shaft.position.set(controls.shaftPosX, controls.shaftPosY, controls.shaftPosZ)
+        // var guishaftCut = gui.addFolder("shaftCut");
+        // guishaftCut.add(controls, "shaftCutPosX", -15, 15).onChange(function () {
+        //     shaftCut.position.set(controls.shaftCutPosX, controls.shaftCutPosY, controls.shaftCutPosZ)
         // });
-        // guishaft.add(controls, "shaftPosY", -15, 15).onChange(function () {
-        //     shaft.position.set(controls.shaftPosX, controls.shaftPosY, controls.shaftPosZ)
+        // guishaftCut.add(controls, "shaftCutPosY", -15, 15).onChange(function () {
+        //     shaftCut.position.set(controls.shaftCutPosX, controls.shaftCutPosY, controls.shaftCutPosZ)
         // });
-        // guishaft.add(controls, "shaftPosZ", -15, 15).onChange(function () {
-        //     shaft.position.set(controls.shaftPosX, controls.shaftPosY, controls.shaftPosZ)
+        // guishaftCut.add(controls, "shaftCutPosZ", -15, 15).onChange(function () {
+        //     shaftCut.position.set(controls.shaftCutPosX, controls.shaftCutPosY, controls.shaftCutPosZ)
         // });
-        // guishaft.add(controls, "scaleX", 0, 10).onChange(function (e) {
-        //     shaft.scale.x = e
+        // guishaftCut.add(controls, "scaleX", 0, 10).onChange(function (e) {
+        //     shaftCut.scale.x = e
         // });
-        // guishaft.add(controls, "scaleY", 0, 10).onChange(function (e) {
-        //     shaft.scale.y = e
+        // guishaftCut.add(controls, "scaleY", 0, 10).onChange(function (e) {
+        //     shaftCut.scale.y = e
         // });
-        // guishaft.add(controls, "scaleZ", 0, 10).onChange(function (e) {
-        //     shaft.scale.z = e
+        // guishaftCut.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+        //     shaftCut.scale.z = e
         // });
-        // guishaft.add(controls, "actionshaft", ["subtract", "intersect", "union", "none"]);
+        // guishaftCut.add(controls, "actionshaftCut", ["subtract", "intersect", "union", "none"]);
 
         gui.add(controls, "showResult");
         gui.add(controls, "rotateResult");
         gui.add(controls, "hideWireframes").onChange(function () {
             if (controls.hideWireframes) {
-                shape.material.visible = false;
-                shaft.material.visible = false;
+                shapeCut.material.visible = false;
+                shaftCut.material.visible = false;
             } else {
-                shape.material.visible = true;
-                shaft.material.visible = true;
+                shapeCut.material.visible = true;
+                shaftCut.material.visible = true;
             }
           });
         //extrude関連gui
@@ -262,28 +260,28 @@ var exporter = new THREE.STLExporter();
             // to set timeout > 1, if not executed immediately.
             setTimeout(function () {
                 scene.remove(result);
-                var shapeBSP = new ThreeBSP(shape);
-                var shaft2BSP = new ThreeBSP(shaft);
+                var shapeCutBSP = new ThreeBSP(shapeCut);
+                var shaftCutBSP = new ThreeBSP(shaftCut);
 
                 var resultBSP;
 
-                // next do the shaft
-                if (!resultBSP) resultBSP = shapeBSP;
-                switch (controls.actionshaft) {
+                // next do the shaftCut
+                if (!resultBSP) resultBSP = shapeCutBSP;
+                switch (controls.actionshaftCut) {
                     case "subtract":
-                        resultBSP = resultBSP.subtract(shaft2BSP);
+                        resultBSP = resultBSP.subtract(shaftCutBSP);
                         break;
                     case "intersect":
-                        resultBSP = resultBSP.intersect(shaft2BSP);
+                        resultBSP = resultBSP.intersect(shaftCutBSP);
                         break;
                     case "union":
-                        resultBSP = resultBSP.union(shaft2BSP);
+                        resultBSP = resultBSP.union(shaftCutBSP);
                         break;
                     case "none": // noop;
                 }
 
 
-                if (controls.actionshaft === "none" && controls.actionshape === "none") {
+                if (controls.actionshaftCut === "none" && controls.actionshapeCut === "none") {
                     // do nothing
                 } else {
                     result = resultBSP.toMesh();
@@ -343,7 +341,6 @@ var exporter = new THREE.STLExporter();
         function render() {
             stats.update();
 
-
 //            sphere.rotation.y=step+=0.01;
 
 //            if (typeof  ThreeBSP!='undefined') {console.log(ThreeBSP)};
@@ -380,31 +377,30 @@ var exporter = new THREE.STLExporter();
     function drawShape() {
 
         // create a basic shape
-        var shape = new THREE.Shape();
-
+        var shapeCut = new THREE.Shape();
 
         // startpoint
-        shape.moveTo(-5.2, -4);
+        shapeCut.moveTo(-5.2, -4);
 
         // straight line upwards
-        shape.lineTo(-5.2, 8);
+        shapeCut.lineTo(-5.2, 8);
 
         // straight line upwards
-        shape.lineTo(4, 8);
+        shapeCut.lineTo(4, 8);
 
         // 溝
-        shape.lineTo(4, -2);
-        shape.lineTo(5.2, -2);
-        shape.lineTo(5.2, 8);
+        shapeCut.lineTo(4, -2);
+        shapeCut.lineTo(5.2, -2);
+        shapeCut.lineTo(5.2, 8);
 
-        shape.lineTo(7.2, 8);
+        shapeCut.lineTo(7.2, 8);
 
-        shape.lineTo(7.2, -4);
+        shapeCut.lineTo(7.2, -4);
 
-        shape.lineTo(-4.8, -4);
+        shapeCut.lineTo(-4.8, -4);
 
         // return the shape
-        return shape;
+        return shapeCut;
     }
 
     function createMesh(geom) {
@@ -427,15 +423,15 @@ var exporter = new THREE.STLExporter();
         return mesh;
     }
 
-    function createLine(shape, spaced) {
+    function createLine(shapeCut, spaced) {
         if (!spaced) {
-            var mesh = new THREE.Line(shape.createPointsGeometry(), new THREE.LineBasicMaterial({
+            var mesh = new THREE.Line(shapeCut.createPointsGeometry(), new THREE.LineBasicMaterial({
                 color: 0xff3333,
                 linewidth: 2
             }));
             return mesh;
         } else {
-            var mesh = new THREE.Line(shape.createSpacedPointsGeometry(20), new THREE.LineBasicMaterial({
+            var mesh = new THREE.Line(shapeCut.createSpacedPointsGeometry(20), new THREE.LineBasicMaterial({
                 color: 0xff3333,
                 linewidth: 2
             }));

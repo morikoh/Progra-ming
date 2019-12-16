@@ -37,10 +37,11 @@
 <body>
 
   <div id="info">
-    <a>Tapa Cutter Generator</a> <br/><br/>
-    <button onclick="exportASCII()">export ASCII</button>
+    <a>Tape Cutter Generator</a> <br/><br/>
+    <button onclick="exportASCII()">export STL tapecutter base</button>
     <!-- <button onclick="exportBinary()">export binary</button> -->
-    <button onclick="exportlibRotationASCII()">export lib_rotate</button>
+    <button onclick="exportlibRotationASCII()">export STL lib_rotate</button>
+    <button onclick="exportlibCutASCII()">export STL lib_cut</button>
   </div>
 
 <div id="Stats-output">
@@ -55,6 +56,7 @@
 
 var result;
 var result2;
+var result3;
 
 //stlexporter
 var exporter = new THREE.STLExporter();
@@ -68,7 +70,7 @@ var exporter = new THREE.STLExporter();
         var scene = new THREE.Scene();
 
         // create a camera, which defines where we're looking at.
-        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
         var controls = new THREE.OrbitControls(camera);
 
         // create the ground plane
@@ -133,6 +135,13 @@ var exporter = new THREE.STLExporter();
         rotationCylinder.position.set(-40, 25, 0);
         rotationCylinder.rotation.x = 0.5 * Math.PI;
 
+        //lib_cutの図形
+        var shapeCut = createMesh(new THREE.ShapeGeometry(drawShapeCut()));
+        shapeCut.position.x = 100;
+
+        var shaftCut = createMesh(new THREE.BoxGeometry(7.8, 7.8, 30));
+        shaftCut.position.set(40, 25, 0);
+
         //var result;
 
 
@@ -146,6 +155,9 @@ var exporter = new THREE.STLExporter();
         scene.add(dammyRotation);
         scene.add(rotationRectangle);
         scene.add(rotationCylinder);
+        //lib_cutをシーンに追加
+        scene.add(shapeCut);
+        scene.add(shaftCut);
 
         // position and point the camera to the center of the scene
         camera.position.x = 0;
@@ -153,13 +165,11 @@ var exporter = new THREE.STLExporter();
         camera.position.z = 100;
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-
         // add the output of the renderer to the html element
         document.getElementById("WebGL-output").appendChild(webGLRenderer.domElement);
 
         // call the render function
         var step = 0;
-
 
         // setup the control gui
         var controls = new function () {
@@ -222,6 +232,10 @@ var exporter = new THREE.STLExporter();
                 };
 
                 shape = createMesh(new THREE.ExtrudeGeometry(drawShape(), options));
+                shape.position.z= -15;
+                squareBack.position.z= -15;
+                squareFront.position.z= -15;
+
                 // add it to the scene.
                 scene.add(shape);
 
@@ -278,6 +292,59 @@ var exporter = new THREE.STLExporter();
             this.actionrotationRectangle = "union"; // add, substract, intersect
             this.actionrotationCylinder = "union"; // add, substract, intersect
 
+            //lib_cut
+            this.shapeCutPosX = shapeCut.position.x;
+            this.shapeCutPosY = shapeCut.position.y;
+            this.shapeCutPosZ = shapeCut.position.z;
+            this.shapeCutScale = 1;
+
+            this.shaftCutPosX = shaftCut.position.x;
+            this.shaftCutPosY = shaftCut.position.y;
+            this.shaftCutPosZ = shaftCut.position.z;
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;
+
+            this.actionshaftCut = "union"; // add, substract, intersect
+            this.actionSphere = "union";
+
+            this.amountCut = 1;
+            this.bevelThicknessCut = 5;
+            this.bevelSizeCut = 0;
+            this.bevelEnabledCut = true;
+            this.bevelSegmentsCut = 1;
+            this.bevelEnabledCut = true;
+            this.curveSegmentsCut = 1;
+            this.stepsCut = 1;
+
+            this.asGeomCut = function () {
+                // remove the old plane
+                scene.remove(shapeCut);
+                scene.remove(shaftCut);
+                // create a new one
+
+                var options = {
+                    amount: controls.amountCut,
+                    bevelThickness: controls.bevelThicknessCut,
+                    bevelSize: controls.bevelSizeCut,
+                    bevelSegments: controls.bevelSegmentsCut,
+                    bevelEnabled: controls.bevelEnabledCut,
+                    curveSegments: controls.curveSegmentsCut,
+                    steps: controls.stepsCut
+                };
+
+                shapeCut = createMesh(new THREE.ExtrudeGeometry(drawShapeCut(), options));
+                shapeCut.position.set(100,25,0);
+                shapeCut.position.z = -controls.amountCut/2;
+                shaftCut = createMesh(new THREE.BoxGeometry(7.8, 7.8, controls.amountCut+14));
+                shaftCut.position.set(100,25,0);
+
+                // add it to the scene.
+                scene.add(shapeCut);
+                scene.add(shaftCut);
+            };
+
+
         };
 
         var gui = new dat.GUI();
@@ -301,6 +368,8 @@ var exporter = new THREE.STLExporter();
         guishape.add(controls, "scaleZ", 0, 10).onChange(function (e) {
             shape.scale.z = e
         });
+        // //tapecutterBodyのextrude関連gui
+        // guishape.add(controls, 'amount', 0, 10).onChange(controls.asGeom);
         // guishape.add(controls, "shapeScale", 0, 10).onChange(function (e) {
         //     shape.scale.set(e, e, e)
         // });
@@ -315,9 +384,9 @@ var exporter = new THREE.STLExporter();
         guisquareBack.add(controls, "squareBackPosZ", -15, 15).onChange(function () {
             squareBack.position.set(controls.squareBackPosX, controls.squareBackPosY, controls.squareBackPosZ)
         });
-        guisquareBack.add(controls, "squareBackScale", 0, 10).onChange(function (e) {
-            squareBack.scale.set(e, e, e)
-        });
+        // guisquareBack.add(controls, "squareBackScale", 0, 10).onChange(function (e) {
+        //     squareBack.scale.set(e, e, e)
+        // });
         guisquareBack.add(controls, "actionsquareBack", ["subtract", "intersect", "union", "none"]);
 
         var guisquareFront = gui.addFolder("squareFront");
@@ -330,15 +399,15 @@ var exporter = new THREE.STLExporter();
         guisquareFront.add(controls, "squareFrontPosZ", -15, 15).onChange(function () {
             squareFront.position.set(controls.squareFrontPosX, controls.squareFrontPosY, controls.squareFrontPosZ)
         });
-        guisquareFront.add(controls, "scaleX", 0, 10).onChange(function (e) {
-            squareFront.scale.x = e
-        });
-        guisquareFront.add(controls, "scaleY", 0, 10).onChange(function (e) {
-            squareFront.scale.y = e
-        });
-        guisquareFront.add(controls, "scaleZ", 0, 10).onChange(function (e) {
-            squareFront.scale.z = e
-        });
+        // guisquareFront.add(controls, "scaleX", 0, 10).onChange(function (e) {
+        //     squareFront.scale.x = e
+        // });
+        // guisquareFront.add(controls, "scaleY", 0, 10).onChange(function (e) {
+        //     squareFront.scale.y = e
+        // });
+        // guisquareFront.add(controls, "scaleZ", 0, 10).onChange(function (e) {
+        //     squareFront.scale.z = e
+        // });
         guisquareFront.add(controls, "actionsquareFront", ["subtract", "intersect", "union", "none"]);
 
         //lib_rotateのパラメータ
@@ -346,6 +415,23 @@ var exporter = new THREE.STLExporter();
         gui.add(controls, 'radius', 0, 40).onChange(controls.redraw);
         gui.add(controls, 'height', 0, 40).onChange(controls.redraw);
         // guirotationCylinder.add(controls, "actionrotationCylinder", ["subtract", "intersect", "union", "none"]);
+
+        controls.asGeom();
+        controls.asGeomCut();
+
+        //lib_cutのパラメータ
+        var guishapeCut = gui.addFolder("shapeCut");
+        guishapeCut.add(controls, "shapeCutPosX", -100, 100).onChange(function () {
+            shapeCut.position.set(controls.shapeCutPosX, controls.shapeCutPosY, controls.shapeCutPosZ)
+        });
+        guishapeCut.add(controls, "shapeCutPosY", -40, 40).onChange(function () {
+            shapeCut.position.set(controls.shapeCutPosX, controls.shapeCutPosY, controls.shapeCutPosZ)
+        });
+        guishapeCut.add(controls, "shapeCutPosZ", -40, 40).onChange(function () {
+            shapeCut.position.set(controls.shapeCutPosX, controls.shapeCutPosY, controls.shapeCutPosZ)
+        });
+        guishapeCut.add(controls, 'amountCut', 0, 40).onChange(controls.asGeomCut);
+
 
         gui.add(controls, "showResult");
         gui.add(controls, "rotateResult");
@@ -355,18 +441,18 @@ var exporter = new THREE.STLExporter();
                 shape.material.visible = false;
                 squareBack.material.visible = false;
                 squareFront.material.visible = false;
+                shapeCut.material.visible = false;
+                shaftCut.material.visible = false;
             } else {
                 dammyBase.material.visible = true;
                 shape.material.visible = true;
                 squareBack.material.visible = true;
                 squareFront.material.visible = true;
+                shapeCut.material.visible = true;
+                shaftCut.material.visible = true;
             }
           });
-        //extrude関連gui
-        guishape.add(controls, 'amount', 0, 10).onChange(controls.asGeom);
-        guishape.add(controls, 'steps', 1, 5).step(1).onChange(controls.asGeom);
 
-        controls.asGeom();
 
         render();
 
@@ -392,6 +478,11 @@ var exporter = new THREE.STLExporter();
                 var rotationCylinderBSP = new ThreeBSP(rotationCylinder);
                 var rotationRectangleBSP = new ThreeBSP(rotationRectangle);
                 var result2BSP;
+                //lib_cut
+                scene.remove(result3);
+                var shapeCutBSP = new ThreeBSP(shapeCut);
+                var shaftCutBSP = new ThreeBSP(shaftCut)
+                var result3BSP;;
 
 
                 // first do the sphere
@@ -484,6 +575,29 @@ var exporter = new THREE.STLExporter();
                     result2.geometry.computeVertexNormals();
 
                     scene.add(result2);
+                }
+
+                // next do the shaftCut
+                if (!result3BSP) result3BSP = shapeCutBSP;
+                switch (controls.actionshaftCut) {
+                    case "subtract":
+                        result3BSP = result3BSP.subtract(shaftCutBSP);
+                        break;
+                    case "intersect":
+                        result3BSP = result3BSP.intersect(shaftCutBSP);
+                        break;
+                    case "union":
+                        result3BSP = result3BSP.union(shaftCutBSP);
+                        break;
+                    case "none": // noop;
+                }
+                if (controls.actionshaftCut === "none" && controls.actionshapeCut === "none") {
+                    // do nothing
+                } else {
+                    result3 = result3BSP.toMesh();
+                    result3.geometry.computeFaceNormals();
+                    result3.geometry.computeVertexNormals();
+                    scene.add(result3);
                 }
 
                 hideSpinner(spinner);
@@ -602,6 +716,29 @@ var exporter = new THREE.STLExporter();
         return shape;
     }
 
+    function drawShapeCut() {
+
+        // create a basic shape
+        var shapeCut = new THREE.Shape();
+
+        // startpoint
+        shapeCut.moveTo(-5.2, -4);
+        // straight line upwards
+        shapeCut.lineTo(-5.2, 8);
+        // straight line upwards
+        shapeCut.lineTo(4, 8);
+        // 溝
+        shapeCut.lineTo(4, -2);
+        shapeCut.lineTo(5.2, -2);
+        shapeCut.lineTo(5.2, 8);
+        shapeCut.lineTo(7.2, 8);
+        shapeCut.lineTo(7.2, -4);
+        shapeCut.lineTo(-4.8, -4);
+
+        // return the shape
+        return shapeCut;
+    }
+
     function createMesh(geom) {
 
         geom.applyMatrix(new THREE.Matrix4().makeTranslation(-20, 0, 0));
@@ -656,11 +793,19 @@ var exporter = new THREE.STLExporter();
 
     }
 
-    //stlダウンロードASCII
+    //lib_rotateをstlでダウンロードASCII
     function exportlibRotationASCII() {
 
       var resultRotation = exporter.parse( result2 );
       saveString( resultRotation, 'lib_rotation.stl' );
+
+    }
+
+    //lib_cutをstlでダウンロードASCII
+    function exportlibCutASCII() {
+
+      var resultCut = exporter.parse( result3 );
+      saveString( resultCut, 'lib_cut.stl' );
 
     }
 
