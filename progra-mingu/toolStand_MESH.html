@@ -275,6 +275,7 @@
             this.sonyMesh3PosZ = sonyMesh3.position.z;
 
             // this.actionbase = "union";/
+            this.actionbase = "union";
             this.actionrectangle1 = "subtract"; // add, substract, intersect
             this.actionrectangle2 = "subtract"; // add, substract, intersect
             this.actionrectangle3 = "subtract"; // add, substract, intersect
@@ -492,7 +493,7 @@
         guisonyMesh1.add(controls, "sonyMesh1PosZ", -100, 100).onChange(function () {
             sonyMesh1.position.set(controls.sonyMesh1PosX, controls.sonyMesh1PosY, controls.sonyMesh1PosZ)
         });
-        guisonyMesh1.add(controls, "actionrectangle3", ["subtract", "union", "none"]);
+        guisonyMesh1.add(controls, "actionsonyMesh1", ["subtract", "union", "none"]);
 
         var guisonyMesh2 = gui.addFolder("MESH2");
         guisonyMesh2.add(controls, "sonyMesh2PosX", -100, 100).onChange(function () {
@@ -504,7 +505,7 @@
         guisonyMesh2.add(controls, "sonyMesh2PosZ", -100, 100).onChange(function () {
             sonyMesh2.position.set(controls.sonyMesh2PosX, controls.sonyMesh2PosY, controls.sonyMesh2PosZ)
         });
-        guisonyMesh2.add(controls, "actionrectangle3", ["subtract",  "union", "none"]);
+        guisonyMesh2.add(controls, "actionsonyMesh2", ["subtract",  "union", "none"]);
 
         var guisonyMesh3 = gui.addFolder("MESH3");
         guisonyMesh3.add(controls, "sonyMesh3PosX", -100, 100).onChange(function () {
@@ -516,7 +517,7 @@
         guisonyMesh3.add(controls, "sonyMesh3PosZ", -100, 100).onChange(function () {
             sonyMesh3.position.set(controls.sonyMesh3PosX, controls.sonyMesh3PosY, controls.sonyMesh3PosZ)
         });
-        guisonyMesh3.add(controls, "actionrectangle3", ["subtract", "union", "none"]);
+        guisonyMesh3.add(controls, "actionsonyMesh3", ["subtract", "union", "none"]);
 
 
         //ブーリアン演算の結果を表示
